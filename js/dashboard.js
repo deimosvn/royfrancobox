@@ -1,0 +1,1832 @@
+/**
+ * ROY FRANCO BOX — Dashboard JavaScript
+ * All data is read from / written to Firebase Firestore.
+ * Loaded as <script type="module"> from dashboard.html.
+ * ============================================================ */
+
+import {
+    auth,
+    db,
+    onAuthChange,
+    logoutAdmin       as fbLogout,
+    onStudentsChange,
+    addStudent,
+    updateStudent,
+    deleteStudentById,
+    registerStudentAttendance,
+    onPaymentsChange,
+    addPayment,
+    markPaymentPaid,
+    onFinancesChange,
+    addFinanceEntry,
+    getSettings,
+    saveSettingsDoc,
+    saveRegistrationCode,
+    getRegistrationCode,
+    onClassesChange,
+    formatDate,
+    formatMXN,
+} from './firebase.js';
+
+// ── Active real-time unsubscribers ─────────────────────────────
+const unsubscribers = [];
+// ── Plan metadata ──────────────────────────────────────────────
+const PLAN_LABELS = { diario: 'Por Clase', semanal: 'Semanal', mensual: 'Mensual' };
+const PLAN_PRICES = { diario: 100, semanal: 300, mensual: 700 };
+const PLAN_EXPIRY_DAYS = { semanal: 7, mensual: 30 };
+
+/** Returns YYYY-MM-DD expiry string, or '' if no fixed expiry (e.g. per-class). */
+function calcExpiryDate(startDate, plan) {
+    const days = PLAN_EXPIRY_DAYS[plan];
+    if (!startDate || !days) return '';
+    const dt = new Date(startDate);
+    dt.setDate(dt.getDate() + days);
+    return dt.toISOString().split('T')[0];
+}
+
+/** Returns integer days until expiryDate (negative = already expired), or null if no date. */
+function daysUntilExpiry(expiryDate) {
+    if (!expiryDate) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const exp   = new Date(expiryDate); exp.setHours(0, 0, 0, 0);
+    return Math.round((exp - today) / 86400000);
+}
+// ── Auth guard ─────────────────────────────────────────────────
+onAuthChange(user => {
+    if (!user) {
+        unsubscribers.forEach(fn => fn());
+        window.location.replace('index.html');
+        return;
+    }
+    const nameEl = document.getElementById('adminUserName');
+    if (nameEl) nameEl.textContent = user.displayName || user.email.split('@')[0];
+    initDashboard();
+});
+
+// ── Bootstrap real-time listeners once ────────────────────────
+let dashboardInitialised = false;
+let _allFinances = [];
+let _allClasses  = [];
+
+function initDashboard() {
+    if (dashboardInitialised) return;
+    dashboardInitialised = true;
+
+    // Students
+    unsubscribers.push(
+        onStudentsChange(students => {
+            _allStudents = students;
+            renderStudentsTable(students);
+            renderDashboardStats(students);
+            renderPendingPaymentsWidget(students);
+            renderClassesToday(students);
+            renderProgressList(students);
+            renderBirthdays(students);
+            renderEnrolledStudentsList(students);
+            renderIndivWaList(students);
+        })
+    );
+
+    // Payments
+    unsubscribers.push(
+        onPaymentsChange(payments => {
+            renderPaymentsTable(payments);
+            renderPaymentsStats(payments);
+            updateFullFinancesStats(payments, _allFinances);
+            renderActivityFeed(payments);
+        })
+    );
+
+    // Classes
+    unsubscribers.push(
+        onClassesChange(classes => {
+            _allClasses = classes;
+            renderAllClasses(classes, _allStudents);
+            renderClassesToday(_allStudents);
+        })
+    );
+
+    // Finances
+    unsubscribers.push(
+        onFinancesChange(finances => {
+            _allFinances = finances;
+            renderFinancesTable(finances);
+            updateFullFinancesStats(_latestPayments, finances);
+        })
+    );
+}
+
+// ══════════════════════════════════════════════════════════════
+//  SIDEBAR & NAVIGATION
+// ══════════════════════════════════════════════════════════════
+
+window.toggleAdminSidebar = function () {
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+    document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+};
+
+// Close sidebar on mobile when menu item clicked
+document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+    item.addEventListener('click', function () {
+        if (window.innerWidth <= 1024) {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (sidebar?.classList.contains('active')) {
+                sidebar.classList.remove('active');
+                overlay?.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+    });
+});
+
+window.showAdminPanel = function (panelName) {
+    document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar-menu-item').forEach(i => i.classList.remove('active'));
+
+    document.getElementById('panel-' + panelName)?.classList.add('active');
+    event?.target?.closest('.sidebar-menu-item')?.classList.add('active');
+
+    const titles = {
+        dashboard:     'Dashboard',
+        students:      'Gestión de Alumnos',
+        classes:       'Clases',
+        schedule:      'Horarios',
+        payments:      'Pagos',
+        finances:      'Finanzas',
+        reports:       'Reportes',
+        messages:      'Mensajes',
+        notifications: 'Notificaciones',
+        inventory:     'Inventario',
+        events:        'Eventos',
+        progress:      'Progreso Alumnos',
+        settings:      'Configuración',
+        backup:        'Respaldos',
+    };
+    const titleEl = document.getElementById('adminPageTitle');
+    if (titleEl) titleEl.textContent = titles[panelName] || 'Dashboard';
+
+    if (window.innerWidth < 1024) {
+        document.getElementById('adminSidebar')?.classList.remove('active');
+    }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  LOGOUT
+// ══════════════════════════════════════════════════════════════
+
+window.logoutAdmin = async function () {
+    unsubscribers.forEach(fn => fn());
+    await fbLogout();
+    window.location.replace('index.html');
+};
+
+// ══════════════════════════════════════════════════════════════
+//  DASHBOARD STATS
+// ══════════════════════════════════════════════════════════════
+
+function renderDashboardStats(students) {
+    const active       = students.filter(s => s.remainingClasses > 0).length;
+    const expired      = students.filter(s => s.remainingClasses <= 0).length;
+    const expiringSoon = students.filter(s => {
+        const d = daysUntilExpiry(s.expiryDate);
+        return d !== null && d >= 0 && d <= 5;
+    }).length;
+    const thisMonth    = new Date().getMonth();
+    const newThisMonth = students.filter(s => {
+        if (!s.createdAt) return false;
+        const d = s.createdAt.toDate ? s.createdAt.toDate() : new Date(s.createdAt.seconds * 1000);
+        return d.getMonth() === thisMonth;
+    }).length;
+
+    const weekStart = new Date(); weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    const weeklyClasses = students.filter(s => {
+        if (!Array.isArray(s.attendanceHistory) || s.attendanceHistory.length === 0) return false;
+        return s.attendanceHistory.some(dateStr => new Date(dateStr) >= weekStart);
+    }).length;
+
+    set('statActiveStudents',  active);
+    set('statWeeklyClasses',   weeklyClasses);
+    set('statNewStudents',     newThisMonth);
+    set('statExpiredStudents', expired);
+    set('sidebarStudentCount', active);
+
+    const pendingCount = document.getElementById('pendingPaymentsCount');
+    if (pendingCount) pendingCount.textContent = `${expired + expiringSoon} pendientes`;
+
+    // Sidebar badge
+    const badge = document.querySelector('.sidebar-menu-item[onclick*="students"] .badge-count');
+    if (badge) badge.textContent = active;
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PENDING PAYMENTS WIDGET (dashboard panel)
+// ══════════════════════════════════════════════════════════════
+
+function renderPendingPaymentsWidget(students) {
+    const tbody = document.getElementById('pending-payments-table');
+    if (!tbody) return;
+
+    // Show students with no classes left OR whose plan expires within 5 days
+    const alerts = students.filter(s => {
+        if (s.remainingClasses <= 0) return true;
+        const d = daysUntilExpiry(s.expiryDate);
+        return d !== null && d <= 5;
+    });
+
+    if (alerts.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--success);padding:1.5rem;"><i class="fas fa-check-circle"></i> Sin pagos urgentes</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = '';
+    alerts.forEach(s => {
+        const initials  = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const phone     = (s.phone || '').replace(/\D/g, '');
+        const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
+        const amount    = PLAN_PRICES[s.plan] || 700;
+        const days      = daysUntilExpiry(s.expiryDate);
+        const planLabel = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
+
+        let expiryBadge;
+        if (s.remainingClasses <= 0 && (days === null || days < 0)) {
+            expiryBadge = '<span class="badge badge-danger">Sin clases</span>';
+        } else if (days !== null && days < 0) {
+            expiryBadge = '<span class="badge badge-danger">Vencido</span>';
+        } else if (days !== null && days === 0) {
+            expiryBadge = '<span class="badge badge-danger">Hoy vence</span>';
+        } else if (days !== null) {
+            expiryBadge = `<span class="badge badge-warning">En ${days} día(s)</span>`;
+        } else {
+            expiryBadge = '<span class="badge badge-danger">Sin clases</span>';
+        }
+
+        const daysForMsg = days !== null ? days : 0;
+        tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+            <td>
+                <div class="student-info-cell">
+                    <div class="avatar">${initials}</div>
+                    <div class="info"><h4>${esc(s.name)}</h4><p>${esc(s.email || '')}</p></div>
+                </div>
+            </td>
+            <td>${esc(s.phone || '—')}</td>
+            <td>${planLabel}</td>
+            <td><strong>$${amount}</strong></td>
+            <td>${expiryBadge}</td>
+            <td>
+                <div class="action-btns">
+                    <button class="btn btn-success btn-sm" onclick="attendStudent('${s.id}')" title="Registrar asistencia / renovar"><i class="fas fa-check"></i></button>
+                    <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','${daysForMsg}')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                </div>
+            </td>
+        </tr>`);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ENROLLED STUDENTS LIST (main dashboard card)
+// ══════════════════════════════════════════════════════════════
+
+let _enrolledAll = [];
+
+function renderEnrolledStudentsList(students) {
+    _enrolledAll = students;
+    _renderEnrolledFiltered();
+}
+
+function _renderEnrolledFiltered() {
+    const list   = document.getElementById('enrolledStudentsList');
+    if (!list) return;
+    const search = (document.getElementById('enrolledSearch')?.value || '').toLowerCase();
+    const plan   = document.getElementById('enrolledFilterPlan')?.value || '';
+
+    const filtered = _enrolledAll.filter(s => {
+        if (plan && s.plan !== plan) return false;
+        if (search && !(s.name || '').toLowerCase().includes(search)) return false;
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:1.5rem;">Sin alumnos registrados.</p>`;
+        return;
+    }
+
+    const planColors = { diario: '#F59E0B', semanal: '#3B82F6', mensual: '#10B981' };
+
+    list.innerHTML = filtered.map(s => {
+        const initials  = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const planLabel = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
+        const planColor = planColors[s.plan] || '#6B7280';
+        const statusCls = s.remainingClasses > 0 ? 'badge-success' : 'badge-danger';
+        const statusTxt = s.remainingClasses > 0 ? 'Activo' : 'Vencido';
+        const days      = daysUntilExpiry(s.expiryDate);
+        const phone     = (s.phone || '').replace(/\D/g, '');
+        const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
+        const amount    = PLAN_PRICES[s.plan] || 700;
+
+        let expiryTag = '';
+        let waBtn     = '';
+        if (s.plan === 'mensual' || s.plan === 'semanal') {
+            if (days !== null) {
+                if (days < 0) {
+                    expiryTag = `<span style="font-size:.72rem;background:#EF444422;color:#EF4444;padding:.1rem .35rem;border-radius:4px;font-weight:600;">Vencido</span>`;
+                } else if (days === 0) {
+                    expiryTag = `<span style="font-size:.72rem;background:#EF444422;color:#EF4444;padding:.1rem .35rem;border-radius:4px;font-weight:600;">Vence hoy</span>`;
+                    waBtn = `<button class="btn btn-whatsapp btn-sm" style="padding:.2rem .5rem;font-size:.75rem;" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','0')" title="Recordatorio WhatsApp"><i class="fab fa-whatsapp"></i></button>`;
+                } else if (days <= 5) {
+                    expiryTag = `<span style="font-size:.72rem;background:#F59E0B22;color:#F59E0B;padding:.1rem .35rem;border-radius:4px;font-weight:600;">Vence en ${days}d</span>`;
+                    waBtn     = `<button class="btn btn-whatsapp btn-sm" style="padding:.2rem .5rem;font-size:.75rem;" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','${days}')" title="Recordatorio WhatsApp"><i class="fab fa-whatsapp"></i></button>`;
+                } else {
+                    expiryTag = `<span style="font-size:.72rem;color:var(--text-gray);">${s.expiryDate}</span>`;
+                }
+            }
+        }
+
+        return `
+        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .25rem;border-bottom:1px solid var(--border);">
+            <div class="avatar" style="min-width:36px;width:36px;height:36px;font-size:.82rem;">${initials}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.name)}</div>
+                <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.12rem;">
+                    <span style="font-size:.72rem;font-weight:700;color:${planColor};background:${planColor}22;padding:.1rem .35rem;border-radius:4px;">${planLabel}</span>
+                    <span style="font-size:.72rem;color:var(--text-gray);">${s.remainingClasses}/${s.totalClasses} clases</span>
+                    ${expiryTag}
+                </div>
+            </div>
+            <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0;">
+                <span class="badge ${statusCls}" style="font-size:.72rem;">${statusTxt}</span>
+                ${waBtn}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+window.filterEnrolledList = function () {
+    _renderEnrolledFiltered();
+};
+
+// ══════════════════════════════════════════════════════════════
+//  ALL CLASSES (panel-classes) — DYNAMIC RENDER
+// ══════════════════════════════════════════════════════════════
+
+/** Returns students whose schedule text matches the class schedule or name */
+function getClassEnrolled(cls, students) {
+    const sch  = (cls.schedule || '').trim().toLowerCase();
+    const name = (cls.name || '').trim().toLowerCase();
+    return students.filter(s => {
+        const sSch = (s.schedule || '').trim().toLowerCase();
+        return sSch && (sSch === sch || sSch === name);
+    });
+}
+
+function buildClassCard(cls, students) {
+    const enrolled = getClassEnrolled(cls, students);
+    const cap      = cls.capacity || 20;
+    const pct      = Math.min(100, Math.round(enrolled.length / cap * 100));
+    const clr      = pct >= 90 ? 'warning' : '';
+    const h        = parseInt(((cls.schedule || '12').match(/\d+/) || ['12'])[0]);
+    const gradBg   = h < 12
+        ? 'linear-gradient(135deg, #F59E0B, #D97706)'
+        : 'linear-gradient(135deg, #3B82F6, #2563EB)';
+    const levelMap = { todos: 'Todos los niveles', principiante: 'Principiante', intermedio: 'Intermedio', avanzado: 'Avanzado' };
+    const levelLabel = levelMap[cls.level] || cls.level || 'Todos los niveles';
+
+    const studentItems = enrolled.slice(0, 3).map(s => {
+        const initials = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        return `
+        <div class="class-student-item">
+            <div class="student-avatar">${initials}</div>
+            <div class="class-student-info">
+                <h5>${esc(s.name)}</h5>
+                <span>${PLAN_LABELS[s.plan] || s.plan}</span>
+            </div>
+            <i class="fas fa-check-circle" style="color:var(--success);"></i>
+        </div>`;
+    }).join('');
+
+    const extra = enrolled.length > 3
+        ? `<p style="text-align:center;color:var(--text-gray);font-size:.8rem;margin-top:.4rem;">+${enrolled.length - 3} más</p>`
+        : '';
+    const emptyMsg = enrolled.length === 0
+        ? `<p style="text-align:center;color:var(--text-gray);font-size:.82rem;padding:.5rem 0;">Sin alumnos inscritos</p>`
+        : '';
+
+    return `
+    <div class="class-card">
+        <div class="class-card-header" style="background:${gradBg};">
+            <h4>${esc(cls.name)}</h4>
+            <div class="class-time"><i class="fas fa-clock"></i> ${esc(cls.schedule)}${cls.days ? ' &middot; ' + esc(cls.days) : ''}</div>
+        </div>
+        <div class="class-card-body">
+            <div class="class-capacity">
+                <span>${enrolled.length}/${cap}</span>
+                <div class="capacity-bar"><div class="capacity-fill ${clr}" style="width:${pct}%;"></div></div>
+                <span>${pct}%</span>
+            </div>
+            <p style="color:var(--text-gray);font-size:.82rem;margin:.6rem 0 .4rem;">
+                <i class="fas fa-user-tie"></i> ${esc(cls.instructor || 'Roy Franco')}
+                &nbsp;&middot;&nbsp;
+                <i class="fas fa-layer-group"></i> ${levelLabel}
+            </p>
+            <div class="class-students-list" style="margin:.4rem 0;">${studentItems}${extra}${emptyMsg}</div>
+            <button class="btn btn-primary btn-sm" style="width:100%;margin-top:.5rem;" onclick="manageClass('${cls.id}')">
+                <i class="fas fa-cog"></i> Administrar Clase
+            </button>
+        </div>
+    </div>`;
+}
+
+function renderAllClasses(classes, students) {
+    const grid = document.getElementById('allClassesGrid');
+    if (!grid) return;
+
+    if (classes.length === 0) {
+        grid.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">
+            No hay clases registradas aún. Usa <b>Nueva Clase</b> para agregar.
+        </p>`;
+        // Zero out stats
+        const els = { statClassesMorning: '0', statClassesAfternoon: '0', statClassesAvgPct: '0%' };
+        Object.entries(els).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.textContent = v; });
+        return;
+    }
+
+    // Stats
+    const getHour = cls => parseInt(((cls.schedule || '12').match(/\d+/) || ['12'])[0]);
+    const morning   = classes.filter(c => { const h = getHour(c); return h >= 5 && h < 12; });
+    const afternoon = classes.filter(c => { const h = getHour(c); return h >= 12; });
+    let totalE = 0, totalC = 0;
+    classes.forEach(cls => {
+        totalE += getClassEnrolled(cls, students).length;
+        totalC += cls.capacity || 20;
+    });
+    const avgPct = totalC > 0 ? Math.round(totalE / totalC * 100) : 0;
+    const statM = document.getElementById('statClassesMorning');
+    const statA = document.getElementById('statClassesAfternoon');
+    const statP = document.getElementById('statClassesAvgPct');
+    if (statM) statM.textContent = morning.length;
+    if (statA) statA.textContent = afternoon.length;
+    if (statP) statP.textContent = avgPct + '%';
+
+    grid.innerHTML = classes.map(cls => buildClassCard(cls, students)).join('');
+}
+
+window.manageClass = function (classId) {
+    const cls = _allClasses.find(c => c.id === classId);
+    if (!cls) { showNotification('Clase no encontrada', 'error'); return; }
+
+    const enrolled = getClassEnrolled(cls, _allStudents);
+    const cap      = cls.capacity || 20;
+    const pct      = Math.min(100, Math.round(enrolled.length / cap * 100));
+    const clr      = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : '#10B981';
+    const levelMap = { todos: 'Todos los niveles', principiante: 'Principiante', intermedio: 'Intermedio', avanzado: 'Avanzado' };
+
+    const titleEl = document.getElementById('manageClassTitle');
+    const infoEl  = document.getElementById('manageClassInfo');
+    const stuEl   = document.getElementById('manageClassStudents');
+    if (!titleEl || !infoEl || !stuEl) return;
+
+    titleEl.textContent = cls.name;
+    infoEl.innerHTML = `
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:.75rem;font-size:.88rem;color:var(--text-gray);">
+            <span><i class="fas fa-clock"></i> ${esc(cls.schedule)}</span>
+            ${cls.days ? `<span><i class="fas fa-calendar"></i> ${esc(cls.days)}</span>` : ''}
+            <span><i class="fas fa-user-tie"></i> ${esc(cls.instructor || 'Roy Franco')}</span>
+            <span><i class="fas fa-layer-group"></i> ${levelMap[cls.level] || cls.level || 'Todos'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem;background:var(--surface);border-radius:10px;padding:.75rem 1rem;margin-bottom:1rem;">
+            <div style="font-size:1.5rem;font-weight:800;color:${clr};">${pct}%</div>
+            <div style="flex:1;">
+                <div style="font-size:.8rem;color:var(--text-gray);margin-bottom:.3rem;">Ocupación: ${enrolled.length} / ${cap} lugares</div>
+                <div class="capacity-bar" style="height:8px;"><div class="capacity-fill" style="width:${pct}%;background:${clr};"></div></div>
+            </div>
+        </div>`;
+
+    stuEl.innerHTML = enrolled.length === 0
+        ? `<p style="text-align:center;color:var(--text-gray);padding:1.5rem;">Sin alumnos inscritos en este horario.<br><small>Los alumnos con horario "<b>${esc(cls.schedule)}</b>" aparecerán aquí.</small></p>`
+        : enrolled.map(s => {
+            const initials  = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const statColor = s.remainingClasses > 0 ? '#10B981' : '#EF4444';
+            const statTxt   = s.remainingClasses > 0 ? 'Activo' : 'Vencido';
+            return `
+            <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);">
+                <div class="avatar" style="min-width:36px;width:36px;height:36px;font-size:.82rem;">${initials}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-weight:600;font-size:.9rem;">${esc(s.name)}</div>
+                    <div style="font-size:.8rem;color:var(--text-gray);">${PLAN_LABELS[s.plan] || s.plan} &middot; ${s.remainingClasses} clases restantes</div>
+                </div>
+                <span style="font-size:.75rem;font-weight:700;color:${statColor};background:${statColor}22;padding:.2rem .5rem;border-radius:4px;white-space:nowrap;">
+                    ${statTxt}
+                </span>
+            </div>`;
+        }).join('');
+
+    document.getElementById('manageClassModal')?.classList.add('active');
+};
+
+// ══════════════════════════════════════════════════════════════
+//  TODAY'S CLASSES WIDGET
+// ══════════════════════════════════════════════════════════════
+
+function renderClassesToday(students) {
+    const grid = document.getElementById('classesTodayGrid');
+    if (!grid) return;
+
+    const active = students.filter(s => s.remainingClasses > 0);
+    if (active.length === 0) {
+        grid.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">Sin alumnos activos registrados.</p>`;
+        return;
+    }
+
+    // Group students by schedule slot
+    const bySchedule = {};
+    active.forEach(s => {
+        const slot = s.schedule || 'Sin horario';
+        if (!bySchedule[slot]) bySchedule[slot] = [];
+        bySchedule[slot].push(s);
+    });
+
+    grid.innerHTML = '';
+    Object.entries(bySchedule).slice(0, 4).forEach(([slot, list]) => {
+        const cls = _allClasses.find(c =>
+            (c.schedule || '').trim().toLowerCase() === slot.trim().toLowerCase() ||
+            (c.name     || '').trim().toLowerCase() === slot.trim().toLowerCase()
+        );
+        const cap = cls?.capacity || 20;
+        const pct = Math.min(100, Math.round((list.length / cap) * 100));
+        const clr = pct > 80 ? 'warning' : '';
+        const items   = list.slice(0, 4).map(s => {
+            const initials = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            return `
+            <div class="class-student-item">
+                <div class="student-avatar">${initials}</div>
+                <div class="class-student-info">
+                    <h5>${esc(s.name)}</h5>
+                    <span>${capitalize(s.level || '')} &bull; ${capitalize(s.plan || '')}</span>
+                </div>
+                <i class="fas fa-check-circle" style="color:var(--success);"></i>
+            </div>`;
+        }).join('');
+        const extra = list.length > 4 ? `<p style="text-align:center;color:var(--text-gray);font-size:.8rem;">+${list.length - 4} más</p>` : '';
+
+        grid.insertAdjacentHTML('beforeend', `
+        <div class="class-card">
+            <div class="class-card-header">
+                <h4>${esc(slot)}</h4>
+                <div class="class-time"><i class="fas fa-users"></i> ${list.length} alumnos</div>
+            </div>
+            <div class="class-card-body">
+                <div class="class-capacity">
+                    <span>${list.length}/${cap}</span>
+                    <div class="capacity-bar"><div class="capacity-fill ${clr}" style="width:${pct}%;"></div></div>
+                    <span>${pct}%</span>
+                </div>
+                <div class="class-students-list">${items}</div>
+                ${extra}
+            </div>
+        </div>`);
+    });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  RECENT ACTIVITY FEED
+// ══════════════════════════════════════════════════════════════
+
+/** Cache latest payments for the activity feed */
+let _latestPayments = [];
+
+function renderActivityFeed(payments) {
+    _latestPayments = payments;
+    const feed = document.getElementById('activityFeed');
+    if (!feed) return;
+
+    // Show last 5 payments as activity items
+    const recent = [...payments]
+        .sort((a, b) => {
+            const ta = a.createdAt?.seconds || 0;
+            const tb = b.createdAt?.seconds || 0;
+            return tb - ta;
+        })
+        .slice(0, 5);
+
+    if (recent.length === 0) {
+        feed.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:1rem;">Sin actividad reciente.</p>`;
+        return;
+    }
+
+    const iconMap = { income: 'green fa-dollar-sign', expense: 'red fa-minus-circle' };
+
+    feed.innerHTML = recent.map(p => `
+    <div class="activity-item">
+        <div class="activity-icon blue"><i class="fas fa-credit-card"></i></div>
+        <div class="activity-content">
+            <h4>Pago ${p.status === 'Pagado' ? 'recibido' : 'pendiente'}</h4>
+            <p>${esc(p.studentName)} — ${formatMXN(p.amount || 0)} (${capitalize(p.plan || '')})</p>
+            <small style="color:var(--text-gray);">${formatDate(p.createdAt)}</small>
+        </div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  BIRTHDAYS WIDGET
+// ══════════════════════════════════════════════════════════════
+
+function renderBirthdays(students) {
+    const list = document.getElementById('birthdayList');
+    if (!list) return;
+
+    const thisMonth = new Date().getMonth() + 1; // 1-12
+    const withBday  = students.filter(s => {
+        if (!s.birthday) return false;
+        const [, m] = s.birthday.split('-').map(Number); // expects YYYY-MM-DD
+        return m === thisMonth;
+    });
+
+    if (withBday.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:1rem;">Sin cumplea&ntilde;os registrados este mes.<br><small>Agrega fecha de nacimiento al registrar alumnos.</small></p>`;
+        return;
+    }
+
+    list.innerHTML = withBday.map(s => {
+        const initials = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const phone    = (s.phone || '').replace(/\D/g, '');
+        const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
+        const dayPart  = s.birthday ? s.birthday.slice(8) : '?';
+        const months   = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        const monNum   = parseInt(s.birthday?.slice(5, 7) || '1', 10);
+        return `
+        <div class="birthday-item">
+            <div class="birthday-avatar">${initials}</div>
+            <div class="birthday-info">
+                <h4>${esc(s.name)}</h4>
+                <p>Cumple el ${dayPart} de ${months[monNum]}</p>
+            </div>
+            <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('${intlPhone}','${esc(s.name)}')">
+                <i class="fab fa-whatsapp"></i> Felicitar
+            </button>
+        </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PROGRESS PANEL
+// ══════════════════════════════════════════════════════════════
+
+function renderProgressList(students) {
+    const list = document.getElementById('progressList');
+    if (!list) return;
+
+    if (students.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:2rem;">Sin alumnos registrados.</p>`;
+        return;
+    }
+
+    list.innerHTML = students.map(s => {
+        const initials    = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const startDate   = s.startDate || (s.createdAt ? formatDate(s.createdAt) : '—');
+        const attendCount = Array.isArray(s.attendanceHistory) ? s.attendanceHistory.length : 0;
+        return `
+        <div class="progress-item">
+            <div class="progress-avatar">${initials}</div>
+            <div class="progress-info">
+                <h4>${esc(s.name)}</h4>
+                <p>Nivel: ${capitalize(s.level || '—')} | Inicio: ${esc(startDate)}</p>
+                <div class="progress-stats">
+                    <span><i class="fas fa-calendar-check"></i> ${attendCount} clases asistidas</span>
+                    <span><i class="fas fa-layer-group"></i> ${capitalize(s.plan || '—')}</span>
+                    <span><i class="fas fa-ticket-alt"></i> ${s.remainingClasses}/${s.totalClasses} restantes</span>
+                </div>
+            </div>
+            <div class="progress-actions">
+                <button class="btn btn-primary btn-sm" onclick="attendStudent('${s.id}')">
+                    <i class="fas fa-check"></i> Asistencia
+                </button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  FINANCES TABLE & STATS
+// ══════════════════════════════════════════════════════════════
+
+function renderFinancesTable(finances) {
+    const tbody = document.getElementById('financesTableBody');
+    if (!tbody) return;
+
+    if (finances.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-gray);padding:2rem;">Sin movimientos registrados.</td></tr>`;
+        return;
+    }
+
+    const sorted = [...finances].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    tbody.innerHTML = sorted.map(f => {
+        const isIncome = f.type === 'income';
+        const amtStr   = isIncome ? `+${formatMXN(f.amount)}` : `-${formatMXN(f.amount)}`;
+        const clr      = isIncome ? 'var(--success)' : 'var(--danger)';
+        const badge    = isIncome
+            ? '<span class="badge badge-success">Ingreso</span>'
+            : '<span class="badge badge-danger">Gasto</span>';
+        const label    = f.studentName ? `${f.concept} — ${f.studentName}` : f.concept;
+        const method   = f.paymentMethod ? `<span style="font-size:.75rem;color:var(--text-gray);">${esc(f.paymentMethod)}</span>` : '';
+        const noteTxt  = f.notes ? esc(f.notes) : '';
+        return `
+        <tr>
+            <td>${formatDate(f.createdAt)}</td>
+            <td>${esc(label)}<br>${method}</td>
+            <td>${badge}</td>
+            <td style="font-size:.8rem;color:var(--text-gray);max-width:160px;">${noteTxt}</td>
+            <td style="color:${clr};font-weight:600;">${amtStr}</td>
+        </tr>`;
+    }).join('');
+}
+
+function updateFullFinancesStats(payments, finances) {
+    const now   = new Date();
+    const month = now.getMonth();
+    const year  = now.getFullYear();
+
+    const inMonth = d => {
+        if (!d) return false;
+        const dt = d.toDate ? d.toDate() : new Date(d.seconds * 1000);
+        return dt.getMonth() === month && dt.getFullYear() === year;
+    };
+
+    // Income: sum of paid payments this month + finance income entries
+    const payIncome   = (payments || []).filter(p => p.status === 'Pagado' && inMonth(p.createdAt)).reduce((a, p) => a + (p.amount || 0), 0);
+    const finIncome   = (finances  || []).filter(f => f.type === 'income'  && inMonth(f.createdAt)).reduce((a, f) => a + (f.amount || 0), 0);
+    const finExpense  = (finances  || []).filter(f => f.type === 'expense' && inMonth(f.createdAt)).reduce((a, f) => a + (f.amount || 0), 0);
+    const totalIncome = payIncome + finIncome;
+    const balance     = totalIncome - finExpense;
+
+    set('statFinanceIncome',  formatMXN(totalIncome));
+    set('statFinanceExpense', formatMXN(finExpense));
+    set('statFinanceBalance', formatMXN(balance));
+}
+
+/** Full students array used for filtering */
+let _allStudents = [];
+
+function renderStudentsTable(students) {
+    _allStudents = students;
+    applyStudentsFilter(students);
+}
+
+function applyStudentsFilter(students) {
+    const level  = document.getElementById('filterLevel')?.value  || '';
+    const plan   = document.getElementById('filterPlan')?.value   || '';
+    const status = document.getElementById('filterStatus')?.value || '';
+
+    const filtered = students.filter(s => {
+        if (level  && s.level  !== level)  return false;
+        if (plan   && s.plan   !== plan)   return false;
+        if (status === 'activo'    && s.remainingClasses <= 0) return false;
+        if (status === 'inactivo'  && s.remainingClasses >  0) return false;
+        if (status === 'pendiente') {
+            const d = daysUntilExpiry(s.expiryDate);
+            if (!(d !== null && d <= 5)) return false;
+        }
+        return true;
+    });
+
+    const tbody = document.getElementById('studentsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-gray);padding:2rem;">Sin alumnos registrados.</td></tr>`;
+        return;
+    }
+
+    filtered.forEach(s => tbody.insertAdjacentHTML('beforeend', buildStudentRow(s)));
+}
+
+function buildStudentRow(s) {
+    const pct         = s.totalClasses > 0 ? Math.round((s.remainingClasses / s.totalClasses) * 100) : 0;
+    const progressClr = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
+    const initials    = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    const statusCls   = s.remainingClasses > 0 ? 'badge-success' : 'badge-danger';
+    const statusTxt   = s.remainingClasses > 0 ? 'Activo' : 'Vencido';
+    const planLabel   = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
+    const levelLabel  = capitalize(s.level || '');
+
+    return `
+    <tr id="student-row-${s.id}">
+        <td>
+            <div class="student-info-cell">
+                <div class="avatar">${initials}</div>
+                <div class="info">
+                    <h4>${esc(s.name)}</h4>
+                    <p>${levelLabel}</p>
+                </div>
+            </div>
+        </td>
+        <td>${esc(s.phone)}</td>
+        <td><span class="badge badge-warning">${esc(s.schedule)}</span></td>
+        <td>${planLabel}</td>
+        <td>
+            <div style="display:flex;align-items:center;gap:.5rem;">
+                <div style="width:60px;height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
+                    <div style="width:${pct}%;height:100%;background:${progressClr};transition:width .3s;"></div>
+                </div>
+                <strong style="color:${progressClr};">${s.remainingClasses}/${s.totalClasses}</strong>
+                <button class="btn btn-success btn-sm" onclick="attendStudent('${s.id}')" title="Registrar asistencia">
+                    <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </td>
+        <td><span class="badge ${statusCls}">${statusTxt}</span></td>
+        <td>
+            <div class="action-btns">
+                <button class="btn btn-info btn-sm"    onclick="viewStudent('${s.id}')"           title="Ver"><i class="fas fa-eye"></i></button>
+                <button class="btn btn-warning btn-sm" onclick="editStudent('${s.id}')"           title="Editar"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-success btn-sm" onclick="openRenewModal('${s.id}')"        title="Renovar suscripción"><i class="fas fa-sync-alt"></i></button>
+                <button class="btn btn-whatsapp btn-sm" onclick="openCustomWhatsApp('${s.id}')"   title="WhatsApp personalizado"><i class="fab fa-whatsapp"></i></button>
+                <button class="btn btn-danger btn-sm"  onclick="deleteStudent('${s.id}')"         title="Eliminar"><i class="fas fa-trash"></i></button>
+            </div>
+        </td>
+    </tr>`;
+}
+
+window.filterStudents = function () {
+    applyStudentsFilter(_allStudents);
+};
+
+window.exportStudents = function () {
+    const rows = [['Nombre','Teléfono','Email','Nivel','Plan','Horario','Clases Restantes','Estado','Fecha Registro']];
+    _allStudents.forEach(s => {
+        rows.push([
+            s.name, s.phone, s.email, s.level, s.plan, s.schedule,
+            `${s.remainingClasses}/${s.totalClasses}`,
+            s.remainingClasses > 0 ? 'Activo' : 'Vencido',
+            formatDate(s.createdAt),
+        ]);
+    });
+    const csv = rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+    const a   = Object.assign(document.createElement('a'), {
+        href:     'data:text/csv;charset=utf-8,' + encodeURIComponent('\uFEFF' + csv),
+        download: `alumnos_${new Date().toISOString().slice(0,10)}.csv`,
+    });
+    a.click();
+    showNotification('Lista de alumnos exportada', 'success');
+};
+
+// ── Add student modal ──────────────────────────────────────────
+
+window.openAddStudentModal = function () {
+    document.getElementById('addStudentModal').classList.add('active');
+};
+
+window.closeAdminModal = function (id) {
+    document.getElementById(id)?.classList.remove('active');
+};
+
+window.updateClassesPreview = function () {
+    const plan       = document.getElementById('newStudentPlan')?.value;
+    const previewBox = document.getElementById('classesPreviewBox');
+    const previewNum = document.getElementById('classesPreviewNumber');
+    const previewTxt = document.getElementById('classesPreviewText');
+    if (!previewBox) return;
+
+    const map = {
+        diario:  { classes: 1,  desc: '1 clase única',              color: '#F59E0B' },
+        semanal: { classes: 5,  desc: '5 clases · vence en 7 días',   color: '#3B82F6' },
+        mensual: { classes: 22, desc: '22 clases · vence en 30 días', color: '#10B981' },
+    };
+    const info = map[plan];
+    if (info) {
+        previewBox.style.display = 'block';
+        previewNum.textContent   = info.classes;
+        previewNum.style.color   = info.color;
+        const startDate = document.getElementById('newStudentStartDate')?.value;
+        const expiry    = calcExpiryDate(startDate, plan);
+        previewTxt.textContent = expiry ? `${info.desc} (${expiry})` : info.desc;
+    } else {
+        previewBox.style.display = 'none';
+    }
+};
+
+window.saveNewStudent = async function (e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('[type=submit]') || e.submitter;
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+    const classesByPlan = { diario: 1, semanal: 5, mensual: 22 };
+    const plan          = document.getElementById('newStudentPlan').value;
+    const totalClasses  = classesByPlan[plan] || 1;
+    const startDate     = document.getElementById('newStudentStartDate').value;
+    const expiryDate    = calcExpiryDate(startDate, plan);
+
+    try {
+        await addStudent({
+            name:              document.getElementById('newStudentName').value.trim(),
+            email:             document.getElementById('newStudentEmail').value.trim(),
+            phone:             document.getElementById('newStudentPhone').value.trim(),
+            level:             document.getElementById('newStudentLevel').value,
+            plan,
+            schedule:          document.getElementById('newStudentSchedule').value.trim(),
+            startDate,
+            expiryDate,
+            birthday:          document.getElementById('newStudentBirthday')?.value || '',
+            paymentMethod:     document.getElementById('newStudentPaymentMethod').value,
+            receiptCode:       document.getElementById('newStudentReceiptCode')?.value?.trim() || '',
+            notes:             document.getElementById('newStudentNotes')?.value?.trim() || '',
+            totalClasses,
+            remainingClasses:  totalClasses,
+            attendanceHistory: [],
+            status:            'Activo',
+        });
+        const planLabel = PLAN_LABELS[plan] || plan;
+        showNotification(`Alumno registrado — Plan ${planLabel} (${totalClasses} clase${totalClasses > 1 ? 's' : ''})`, 'success');
+        // Auto-register finance income
+        const payMethod = document.getElementById('newStudentPaymentMethod')?.value || '';
+        const amt       = PLAN_PRICES[plan] || 0;
+        const conceptMap = { mensual: 'Mensualidad', semanal: 'Plan Semanal', diario: 'Pase Diario' };
+        const concept    = conceptMap[plan] || 'Ingreso';
+        const noteStr    = `${concept} — ${payMethod || 'No especificado'}`;
+        if (amt > 0) {
+            try {
+                const studentName = document.getElementById('newStudentName').value.trim();
+                await addFinanceEntry('income', concept, amt, noteStr, studentName);
+            } catch (_) { /* non-blocking */ }
+        }
+        closeAdminModal('addStudentModal');
+        document.getElementById('addStudentForm').reset();
+        document.getElementById('classesPreviewBox').style.display = 'none';
+    } catch (err) {
+        showNotification('Error al guardar: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Registrar Alumno'; }
+    }
+};
+
+// ── Attendance ─────────────────────────────────────────────────
+
+window.attendStudent = async function (id) {
+    try {
+        await registerStudentAttendance(id);
+        showNotification('Asistencia registrada', 'success');
+    } catch (err) {
+        showNotification(err.message, 'error');
+    }
+};
+
+// ── View / Edit / Delete ───────────────────────────────────────
+
+window.viewStudent = function (id) {
+    const s = _allStudents.find(x => x.id === id);
+    if (!s) return;
+    const fields = {
+        viewStudentName:     s.name || '—',
+        viewStudentEmail:    s.email || '—',
+        viewStudentPhone:    s.phone || '—',
+        viewStudentLevel:    capitalize(s.level || '—'),
+        viewStudentPlan:     PLAN_LABELS[s.plan] || capitalize(s.plan || '—'),
+        viewStudentSchedule: s.schedule || '—',
+        viewStudentClasses:  s.remainingClasses + ' / ' + s.totalClasses,
+        viewStudentStatus:   s.remainingClasses > 0 ? 'Activo' : 'Vencido',
+        viewStudentStart:    s.startDate || '—',
+        viewStudentExpiry:   s.expiryDate || '—',
+        viewStudentBirthday: s.birthday || '—',
+        viewStudentAttended: (Array.isArray(s.attendanceHistory) ? s.attendanceHistory.length : 0) + ' clases',
+        viewStudentNotes:    s.notes || '—',
+    };
+    Object.entries(fields).forEach(([elId, val]) => set(elId, val));
+    document.getElementById('viewStudentModal')?.classList.add('active');
+};
+
+window.editStudent = function (id) {
+    const s = _allStudents.find(x => x.id === id);
+    if (!s) return;
+    const m = document.getElementById('editStudentModal');
+    if (!m) return;
+    document.getElementById('editStudentId').value        = s.id;
+    document.getElementById('editStudentName').value      = s.name || '';
+    document.getElementById('editStudentEmail').value     = s.email || '';
+    document.getElementById('editStudentPhone').value     = s.phone || '';
+    document.getElementById('editStudentLevel').value     = s.level || '';
+    document.getElementById('editStudentPlan').value      = s.plan || '';
+    document.getElementById('editStudentSchedule').value  = s.schedule || '';
+    document.getElementById('editStudentStartDate').value = s.startDate || '';
+    document.getElementById('editStudentBirthday').value  = s.birthday || '';
+    document.getElementById('editStudentNotes').value     = s.notes || '';
+    document.getElementById('editStudentClasses').value   = s.remainingClasses != null ? s.remainingClasses : 0;
+    m.classList.add('active');
+};
+
+window.saveEditStudent = async function (e) {
+    e.preventDefault();
+    const btn = e.submitter || e.target.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+    const id        = document.getElementById('editStudentId').value;
+    const plan      = document.getElementById('editStudentPlan').value;
+    const startDate = document.getElementById('editStudentStartDate').value;
+    try {
+        await updateStudent(id, {
+            name:             document.getElementById('editStudentName').value.trim(),
+            email:            document.getElementById('editStudentEmail').value.trim(),
+            phone:            document.getElementById('editStudentPhone').value.trim(),
+            level:            document.getElementById('editStudentLevel').value,
+            plan,
+            schedule:         document.getElementById('editStudentSchedule').value.trim(),
+            startDate,
+            expiryDate:       calcExpiryDate(startDate, plan),
+            birthday:         document.getElementById('editStudentBirthday').value,
+            notes:            document.getElementById('editStudentNotes').value.trim(),
+            remainingClasses: parseInt(document.getElementById('editStudentClasses').value) || 0,
+        });
+        showNotification('Alumno actualizado correctamente', 'success');
+        closeAdminModal('editStudentModal');
+    } catch (err) {
+        showNotification('Error al actualizar: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Cambios'; }
+    }
+};
+
+window.deleteStudent = async function (id) {
+    if (!confirm('¿Eliminar este alumno? Esta acción no se puede deshacer.')) return;
+    try {
+        await deleteStudentById(id);
+        showNotification('Alumno eliminado', 'success');
+    } catch (err) {
+        showNotification('Error al eliminar: ' + err.message, 'error');
+    }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  PAYMENTS
+// ══════════════════════════════════════════════════════════════
+
+function renderPaymentsTable(payments) {
+    const tbody = document.getElementById('paymentsTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (payments.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-gray);padding:2rem;">Sin pagos registrados.</td></tr>`;
+        return;
+    }
+
+    payments.forEach(p => {
+        const initials   = (p.studentName || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const statusCls  = p.status === 'Pagado' ? 'badge-success' : 'badge-warning';
+        tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+            <td>
+                <div class="student-info-cell">
+                    <div class="avatar">${initials}</div>
+                    <div class="info"><h4>${esc(p.studentName)}</h4></div>
+                </div>
+            </td>
+            <td>${capitalize(p.plan || '')}</td>
+            <td><strong>${formatMXN(p.amount)}</strong></td>
+            <td>${formatDate(p.createdAt)}</td>
+            <td>${capitalize(p.method || '')}</td>
+            <td>
+                <div style="display:flex;align-items:center;gap:.5rem;">
+                    <span class="badge ${statusCls}">${p.status || 'Pendiente'}</span>
+                    ${p.status !== 'Pagado'
+                        ? `<button class="btn btn-success btn-sm" onclick="paymentMarkPaid('${p.id}')"><i class="fas fa-check"></i></button>`
+                        : ''}
+                </div>
+            </td>
+        </tr>`);
+    });
+}
+
+function renderPaymentsStats(payments) {
+    const now       = new Date();
+    const thisMonth = payments.filter(p => {
+        if (!p.createdAt) return false;
+        const d = p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt.seconds * 1000);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    const monthlyTotal  = thisMonth.reduce((acc, p) => acc + (p.amount || 0), 0);
+    const pendingTotal  = payments.filter(p => p.status !== 'Pagado').reduce((acc, p) => acc + (p.amount || 0), 0);
+
+    set('statMonthlyIncome',   formatMXN(monthlyTotal));
+    set('statPendingPayments', formatMXN(pendingTotal));
+    set('statDashboardIncome', formatMXN(monthlyTotal));
+}
+
+window.paymentMarkPaid = async function (id) {
+    try {
+        await markPaymentPaid(id);
+        showNotification('Pago marcado como pagado', 'success');
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
+    }
+};
+
+window.openAddPaymentModal = function () {
+    const sel = document.getElementById('paymentStudentSelect');
+    if (sel) {
+        sel.innerHTML = '<option value="">Seleccionar alumno</option>' +
+            _allStudents.map(s => `<option value="${esc(s.name)}" data-plan="${s.plan}">${esc(s.name)}</option>`).join('');
+        sel.onchange = function () {
+            const opt = sel.selectedOptions[0];
+            const planEl = document.getElementById('paymentPlan');
+            if (opt && opt.dataset.plan && planEl) planEl.value = opt.dataset.plan;
+            const amtEl = document.getElementById('paymentAmount');
+            if (opt && opt.dataset.plan && amtEl && !amtEl.value) amtEl.value = PLAN_PRICES[opt.dataset.plan] || '';
+        };
+    }
+    document.getElementById('addPaymentModal')?.classList.add('active');
+};
+
+window.saveNewPayment = async function (e) {
+    e.preventDefault();
+    const btn = e.submitter || e.target.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+    const studentName = document.getElementById('paymentStudentSelect')?.value?.trim() ||
+                        document.getElementById('paymentStudentManual')?.value?.trim();
+    const amount  = parseFloat(document.getElementById('paymentAmount')?.value || '0');
+    const plan    = document.getElementById('paymentPlan')?.value || 'mensual';
+    const method  = document.getElementById('paymentMethod')?.value || 'efectivo';
+    const notes   = document.getElementById('paymentNotes')?.value?.trim() || '';
+    if (!studentName) {
+        showNotification('Selecciona o escribe el nombre del alumno', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Registrar Pago'; }
+        return;
+    }
+    if (!amount || amount <= 0) {
+        showNotification('Ingresa un monto válido', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Registrar Pago'; }
+        return;
+    }
+    try {
+        await addPayment({ studentName, amount, plan, method, notes, status: 'Pagado' });
+        showNotification('Pago registrado correctamente', 'success');
+        closeAdminModal('addPaymentModal');
+        document.getElementById('addPaymentForm')?.reset();
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Registrar Pago'; }
+    }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  FINANCES
+// ══════════════════════════════════════════════════════════════
+
+function renderFinancesStats(payments) {
+    updateFullFinancesStats(payments, _allFinances);
+}
+
+window.registerIncome = async function () {
+    const conceptEl  = document.getElementById('incomeConceptSelect');
+    const amountEl   = document.getElementById('incomeAmountInput');
+    const studentEl  = document.getElementById('incomeStudentInput');
+    const notesEl    = document.getElementById('incomeNotesInput');
+    const methodEl   = document.getElementById('incomeMethodSelect');
+
+    const concept = conceptEl?.value || 'mensualidad';
+    const amount  = parseFloat(amountEl?.value || '0');
+    const student = studentEl?.value?.trim() || '';
+    const notes   = notesEl?.value?.trim()   || '';
+    const method  = methodEl?.value?.trim()  || '';
+
+    if (!amount || amount <= 0) { showNotification('Ingresa un monto válido', 'error'); return; }
+
+    try {
+        const entry = { type: 'income', concept, amount, notes, studentName: student, paymentMethod: method };
+        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        await addDoc(collection(db, 'finances'), { ...entry, createdAt: serverTimestamp() });
+        if (amountEl)  amountEl.value  = '';
+        if (studentEl) studentEl.value = '';
+        if (notesEl)   notesEl.value   = '';
+        showNotification(`Ingreso de $${formatMXN(amount)} registrado`, 'success');
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
+    }
+};
+
+window.registerExpense = async function () {
+    const conceptEl   = document.getElementById('expenseConceptInput');
+    const amountEl    = document.getElementById('expenseAmountInput');
+    const providerEl  = document.getElementById('expenseNotesInput');   // "Proveedor" field
+    const extraNotesEl = document.getElementById('expenseExtraNotesInput'); // optional extra notes
+
+    const concept = conceptEl?.value || 'Gasto';
+    const amount  = parseFloat(amountEl?.value || '0');
+    const notes   = [providerEl?.value?.trim(), extraNotesEl?.value?.trim()].filter(Boolean).join(' — ');
+
+    if (!amount || amount <= 0) { showNotification('Ingresa un monto válido', 'error'); return; }
+
+    try {
+        await addFinanceEntry('expense', concept, amount, notes);
+        if (amountEl)    amountEl.value    = '';
+        if (providerEl)  providerEl.value  = '';
+        if (extraNotesEl) extraNotesEl.value = '';
+        showNotification(`Gasto de ${formatMXN(amount)} registrado`, 'success');
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
+    }
+};
+
+window.exportFinances = function () {
+    const now     = new Date();
+    const dateStr = now.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+    const month   = now.getMonth();
+    const year    = now.getFullYear();
+    const inMonth = d => {
+        if (!d) return false;
+        const dt = d.toDate ? d.toDate() : new Date(d.seconds * 1000);
+        return dt.getMonth() === month && dt.getFullYear() === year;
+    };
+    const sorted   = [..._allFinances].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    const income   = sorted.filter(f => f.type === 'income');
+    const expense  = sorted.filter(f => f.type === 'expense');
+    const totIn    = income.reduce((a, f) => a + (f.amount || 0), 0);
+    const totEx    = expense.reduce((a, f) => a + (f.amount || 0), 0);
+    const balance  = totIn - totEx;
+
+    const rowsHtml = sorted.map(f => {
+        const isInc = f.type === 'income';
+        const label = f.studentName ? `${f.concept} — ${f.studentName}` : f.concept;
+        const sign  = isInc ? '+' : '-';
+        const color = isInc ? '#10B981' : '#EF4444';
+        const type  = isInc ? 'Ingreso' : 'Gasto';
+        const dt    = f.createdAt ? (f.createdAt.toDate ? f.createdAt.toDate() : new Date(f.createdAt.seconds * 1000)) : null;
+        const dateF = dt ? dt.toLocaleDateString('es-MX') : '—';
+        return `<tr>
+            <td>${dateF}</td>
+            <td>${label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</td>
+            <td>${(f.paymentMethod || '').replace(/&/g,'&amp;') || '—'}</td>
+            <td style="color:${color};">${type}</td>
+            <td>${(f.notes || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') || '—'}</td>
+            <td style="color:${color};font-weight:700;text-align:right;">${sign}$${f.amount?.toLocaleString('es-MX') || '0'}</td>
+        </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="es"><head>
+        <meta charset="UTF-8">
+        <title>Reporte Financiero — ${dateStr}</title>
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #111; background: #fff; padding: 2rem; }
+            .hdr { display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 3px solid #E63946; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+            .title { font-size: 22px; font-weight: 800; color: #E63946; letter-spacing: 2px; }
+            .subtitle { font-size: 11px; color: #666; }
+            .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.5rem; }
+            .stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; text-align: center; }
+            .stat strong { display: block; font-size: 18px; font-weight: 800; }
+            .stat span { font-size: 10px; color: #666; }
+            .green { color: #10B981; } .red { color: #EF4444; } .blue { color: #3B82F6; }
+            table { width: 100%; border-collapse: collapse; font-size: 11px; }
+            th { background: #0F172A; color: #fff; padding: 7px 8px; text-align: left; }
+            td { padding: 5px 8px; border-bottom: 1px solid #e2e8f0; }
+            tr:nth-child(even) td { background: #f8fafc; }
+            .footer { margin-top: 1.5rem; padding-top: .75rem; border-top: 1px solid #e2e8f0; font-size: 10px; color: #999; text-align: center; }
+        </style>
+    </head><body>
+        <div class="hdr">
+            <div>
+                <div class="title">🥊 BOXEO FRANCO</div>
+                <div class="subtitle">Reporte Financiero Completo</div>
+            </div>
+            <div class="subtitle">Generado: ${dateStr}</div>
+        </div>
+        <div class="stats">
+            <div class="stat"><strong class="green">$${totIn.toLocaleString('es-MX')}</strong><span>Total Ingresos</span></div>
+            <div class="stat"><strong class="red">$${totEx.toLocaleString('es-MX')}</strong><span>Total Gastos</span></div>
+            <div class="stat"><strong class="${balance >= 0 ? 'green' : 'red'}">${balance >= 0 ? '+' : ''}$${Math.abs(balance).toLocaleString('es-MX')}</strong><span>Balance Neto</span></div>
+        </div>
+        <table>
+            <thead><tr><th>Fecha</th><th>Concepto</th><th>Método</th><th>Tipo</th><th>Notas</th><th style="text-align:right;">Monto</th></tr></thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>
+        <div class="footer">Reporte generado por sistema Boxeo Franco · ${dateStr}</div>
+        <script>window.onload = () => window.print();<\/script>
+    </body></html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) { showNotification('Activa las ventanas emergentes para exportar', 'warning'); return; }
+    w.document.write(html);
+    w.document.close();
+    showNotification('Reporte financiero generado — guarda como PDF con Ctrl+P', 'success');
+};
+
+// ══════════════════════════════════════════════════════════════
+//  RENEW SUBSCRIPTION
+// ══════════════════════════════════════════════════════════════
+
+window.openRenewModal = function (id) {
+    const s = _allStudents.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('renewStudentId').value   = id;
+    document.getElementById('renewStudentName').textContent = s.name;
+    document.getElementById('renewPlan').value        = s.plan || 'mensual';
+    document.getElementById('renewStartDate').value   = new Date().toISOString().split('T')[0];
+    document.getElementById('renewPaymentMethod').value = '';
+    document.getElementById('renewModal')?.classList.add('active');
+};
+
+window.saveRenew = async function (e) {
+    e.preventDefault();
+    const btn = e.submitter || e.target.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Renovando…'; }
+
+    const id      = document.getElementById('renewStudentId').value;
+    const plan    = document.getElementById('renewPlan').value;
+    const start   = document.getElementById('renewStartDate').value;
+    const method  = document.getElementById('renewPaymentMethod').value;
+    const classesByPlan = { diario: 1, semanal: 5, mensual: 22 };
+    const totalCls  = classesByPlan[plan] || 1;
+    const expiryDate = calcExpiryDate(start, plan);
+    const s = _allStudents.find(x => x.id === id);
+
+    try {
+        await updateStudent(id, {
+            plan,
+            startDate:        start,
+            expiryDate,
+            totalClasses:     totalCls,
+            remainingClasses: totalCls,
+            status:           'Activo',
+        });
+        // Register income
+        const concept = { mensual: 'Mensualidad', semanal: 'Plan Semanal', diario: 'Pase Diario' }[plan] || 'Renovación';
+        const amt     = PLAN_PRICES[plan] || 0;
+        const noteStr = `Renovación — ${method || 'No especificado'}`;
+        if (amt > 0) await addFinanceEntry('income', concept, amt, noteStr, s?.name || '');
+        showNotification(`Suscripción renovada — Plan ${PLAN_LABELS[plan]}`, 'success');
+        closeAdminModal('renewModal');
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> Renovar'; }
+    }
+};
+
+// ══════════════════════════════════════════════════════════════
+//  CUSTOM WHATSAPP MESSAGE
+// ══════════════════════════════════════════════════════════════
+
+window.openCustomWhatsApp = function (id) {
+    const s = _allStudents.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('customWaStudentId').value     = id;
+    document.getElementById('customWaStudentName').textContent = s.name;
+    const days = daysUntilExpiry(s.expiryDate);
+    const amt  = PLAN_PRICES[s.plan] || 700;
+    // pre-fill default message
+    let defaultMsg = `¡Hola ${s.name}! 🥊
+
+`;
+    if (s.remainingClasses <= 0 || (days !== null && days <= 3)) {
+        defaultMsg += `Te recordamos que tu plan *${PLAN_LABELS[s.plan]}* ${days !== null && days >= 0 ? `vence en *${days} día(s)*` : 'ha *vencido*'}.
+
+¡Renueva para seguir entrenando! 💪
+📞 686 348 4588`;
+    } else {
+        defaultMsg += `¡Gracias por ser parte de la familia Boxeo Franco! 💪
+
+Cualquier duda estamos para ayudarte.
+📞 686 348 4588`;
+    }
+    document.getElementById('customWaText').value = defaultMsg;
+    document.getElementById('customWaModal')?.classList.add('active');
+};
+
+window.sendCustomWa = function () {
+    const id  = document.getElementById('customWaStudentId').value;
+    const msg = document.getElementById('customWaText')?.value?.trim();
+    if (!msg) { showNotification('Escribe un mensaje', 'warning'); return; }
+    const s = _allStudents.find(x => x.id === id);
+    if (!s) return;
+    const phone     = (s.phone || '').replace(/\D/g, '');
+    if (!phone) { showNotification('El alumno no tiene teléfono registrado', 'error'); return; }
+    const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
+    window.open(`https://wa.me/${intlPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    showNotification(`Mensaje abierto para ${s.name}`, 'success');
+    closeAdminModal('customWaModal');
+};
+
+// ══════════════════════════════════════════════════════════════
+//  SETTINGS
+// ══════════════════════════════════════════════════════════════
+
+window.saveSettings = async function () {
+    const data = {
+        gymName:  document.getElementById('settingsGymName')?.value?.trim()  || '',
+        phone:    document.getElementById('settingsPhone')?.value?.trim()     || '',
+        address:  document.getElementById('settingsAddress')?.value?.trim()   || '',
+        email:    document.getElementById('settingsEmail')?.value?.trim()     || '',
+        schedule: document.getElementById('settingsSchedule')?.value?.trim()  || '',
+    };
+    try {
+        await saveSettingsDoc(data);
+        showNotification('Configuración guardada', 'success');
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
+    }
+};
+
+window.updateAdminCredentials = function () {
+    showNotification('Para cambiar contraseña usa Firebase Console → Authentication', 'success');
+};
+
+// ── Secret code management ─────────────────────────────────────
+
+window.toggleSecretCodeVisibility = function () {
+    const input   = document.getElementById('secretCodeInput');
+    const icon    = document.getElementById('secretCodeEyeIcon');
+    const visible = input.type === 'text';
+    input.type    = visible ? 'password' : 'text';
+    icon.className = visible ? 'fas fa-eye' : 'fas fa-eye-slash';
+};
+
+window.saveSecretCode = async function () {
+    const code   = document.getElementById('secretCodeInput')?.value?.trim();
+    const status = document.getElementById('secretCodeStatus');
+    if (!code) {
+        if (status) { status.textContent = 'Escribe un código primero.'; status.style.color = 'var(--danger)'; }
+        return;
+    }
+    try {
+        await saveRegistrationCode(code);
+        if (status) { status.textContent = '✓ Código guardado correctamente.'; status.style.color = 'var(--success)'; }
+        showNotification('Código secreto actualizado', 'success');
+    } catch (err) {
+        if (status) { status.textContent = 'Error: ' + err.message; status.style.color = 'var(--danger)'; }
+        showNotification('Error al guardar código', 'error');
+    }
+};
+
+// ── Load settings on startup ───────────────────────────────────
+async function loadSettings() {
+    try {
+        const s = await getSettings();
+        if (s) {
+            ['gymName','phone','address','email','schedule'].forEach(f => {
+                const el = document.getElementById('settings' + f.charAt(0).toUpperCase() + f.slice(1));
+                if (el && s[f]) el.value = s[f];
+            });
+        }
+    } catch (_) { /* settings doc may not exist yet */ }
+
+    try {
+        const code     = await getRegistrationCode();
+        const codeEl   = document.getElementById('secretCodeInput');
+        const statusEl = document.getElementById('secretCodeStatus');
+        if (codeEl) {
+            if (code) {
+                codeEl.value = code;
+                if (statusEl) { statusEl.textContent = '✓ Código configurado.'; statusEl.style.color = 'var(--success)'; }
+            } else {
+                if (statusEl) { statusEl.textContent = '⚠ Sin código — cualquier persona podría registrarse.'; statusEl.style.color = 'var(--warning)'; }
+            }
+        }
+    } catch (_) { /* ignore */ }
+}
+loadSettings();
+
+// ══════════════════════════════════════════════════════════════
+//  MESSAGES / WHATSAPP
+// ══════════════════════════════════════════════════════════════
+
+window.useTemplate = function (type) {
+    const templates = {
+        recordatorio: `¡Hola {nombre}! 🥊\n\nTe recordamos que tu pago de *{monto}* vence el *{fecha_vencimiento}*.\n\nPor favor realiza tu pago a tiempo.\n\n¡Gracias! 💪`,
+        cancelacion:  `¡Hola {nombre}! 🥊\n\nLas clases del día *[FECHA]* han sido canceladas por *[MOTIVO]*.\n\nSe reanudarán el *[FECHA]*. ¡Disculpa las molestias!`,
+        promocion:    `¡Hola {nombre}! 🥊\n\n¡Promoción especial para ti!\n\n*[DESCRIPCIÓN]*\n\nVálido hasta *[FECHA]* 💪`,
+        evento:       `¡Hola {nombre}! 🥊\n\n🏆 *[NOMBRE DEL EVENTO]*\n📅 Fecha: *[FECHA]*\n📍 Lugar: *[LUGAR]*\n\n¡Te esperamos! 🎉`,
+    };
+    const el = document.getElementById('massMessageText');
+    if (el) el.value = templates[type] || '';
+    showNotification('Plantilla cargada', 'success');
+};
+
+window.sendMassWhatsApp = function () {
+    const msg        = document.getElementById('massMessageText')?.value?.trim();
+    const recipients = document.getElementById('messageRecipients')?.value || 'todos';
+    if (!msg) { showNotification('Escribe un mensaje primero', 'warning'); return; }
+
+    let targets = _allStudents;
+    if (recipients === 'activos')    targets = _allStudents.filter(s => s.remainingClasses > 0);
+    if (recipients === 'pendientes') targets = _allStudents.filter(s => s.remainingClasses <= 0);
+    if (recipients === 'nuevos') {
+        const thisMonth = new Date().getMonth();
+        targets = _allStudents.filter(s => {
+            if (!s.createdAt) return false;
+            const d = s.createdAt.toDate ? s.createdAt.toDate() : new Date(s.createdAt.seconds * 1000);
+            return d.getMonth() === thisMonth;
+        });
+    }
+
+    if (targets.length === 0) { showNotification('No hay alumnos en el grupo seleccionado', 'warning'); return; }
+
+    targets.forEach((s, i) => {
+        const phone     = (s.phone || '').replace(/\D/g, '');
+        if (!phone) return;
+        const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
+        const days      = daysUntilExpiry(s.expiryDate);
+        const expiryStr = s.expiryDate || 'próximamente';
+        const personalised = msg
+            .replace(/\{nombre\}/g, s.name || 'Alumno')
+            .replace(/\{monto\}/g, '$' + (PLAN_PRICES[s.plan] || 700) + ' MXN')
+            .replace(/\{fecha_vencimiento\}/g, expiryStr);
+        setTimeout(() => window.open(`https://wa.me/${intlPhone}?text=${encodeURIComponent(personalised)}`, '_blank'), i * 400);
+    });
+    showNotification(`Enviando WhatsApp a ${targets.length} alumno(s)…`, 'success');
+};
+
+window.previewMessage = function () {
+    const msg = document.getElementById('massMessageText')?.value;
+    if (!msg?.trim()) { showNotification('Escribe un mensaje primero', 'warning'); return; }
+    alert('Vista previa:\n\n' + msg
+        .replace(/{nombre}/g, 'Juan Martínez')
+        .replace(/{fecha_vencimiento}/g, '20 de Enero')
+        .replace(/{monto}/g, '$700 MXN'));
+};
+
+// ── Individual WhatsApp student list ─────────────────────────
+function renderIndivWaList(students) {
+    window._indivWaStudents = students;
+    window.filterIndivWaList();
+}
+
+window.filterIndivWaList = function () {
+    const list    = document.getElementById('indivWaList');
+    if (!list) return;
+    const search  = (document.getElementById('indivWaSearch')?.value || '').toLowerCase();
+    const all     = window._indivWaStudents || _allStudents;
+    const filtered = all.filter(s => !search || (s.name || '').toLowerCase().includes(search));
+    if (filtered.length === 0) {
+        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:1rem;">Sin coincidencias.</p>`;
+        return;
+    }
+    const planColors = { diario: '#F59E0B', semanal: '#3B82F6', mensual: '#10B981' };
+    list.innerHTML = filtered.slice(0, 50).map(s => {
+        const initials = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const days     = daysUntilExpiry(s.expiryDate);
+        const planColor = planColors[s.plan] || '#6B7280';
+        const planLabel = PLAN_LABELS[s.plan] || s.plan;
+        let statusBadge = s.remainingClasses > 0
+            ? `<span style="font-size:.7rem;color:#10B981;background:#10B98122;padding:.1rem .35rem;border-radius:4px;">Activo</span>`
+            : `<span style="font-size:.7rem;color:#EF4444;background:#EF444422;padding:.1rem .35rem;border-radius:4px;">Vencido</span>`;
+        if (days !== null && days >= 0 && days <= 3) {
+            statusBadge += ` <span style="font-size:.7rem;color:#F59E0B;background:#F59E0B22;padding:.1rem .35rem;border-radius:4px;">Vence en ${days}d</span>`;
+        }
+        return `
+        <div style="display:flex;align-items:center;gap:.6rem;padding:.5rem .25rem;border-bottom:1px solid var(--border);">
+            <div class="avatar" style="min-width:32px;width:32px;height:32px;font-size:.75rem;">${initials}</div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-weight:600;font-size:.85rem;">${esc(s.name)}</div>
+                <div style="display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.1rem;">
+                    <span style="font-size:.7rem;font-weight:700;color:${planColor};">${planLabel}</span>
+                    ${statusBadge}
+                </div>
+            </div>
+            <button class="btn btn-whatsapp btn-sm" style="padding:.3rem .6rem;font-size:.78rem;white-space:nowrap;"
+                onclick="openCustomWhatsApp('${s.id}')">
+                <i class="fab fa-whatsapp"></i> Mensaje
+            </button>
+        </div>`;
+    }).join('');
+};
+
+window.sendWhatsAppReminder = function (phone, name, amount, days) {
+    const msg = `¡Hola ${name}! 🥊\n\nTu pago de *$${amount} MXN* vence en *${days} día(s)*.\n\n📅 Paga a tiempo para seguir entrenando.\n📞 686 348 4588`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    showNotification(`Mensaje enviado a ${name}`, 'success');
+};
+
+window.sendBirthdayWish = function (phone, name) {
+    const msg = `¡Feliz Cumpleaños ${name}! 🎂🥊\n\nDe parte de *Escuela de Boxeo Franco*. ¡Sigue entrenando fuerte! 💪`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+    showNotification(`Felicitación enviada a ${name}`, 'success');
+};
+
+// ══════════════════════════════════════════════════════════════
+//  MISC STUBS (panels not yet fully wired)
+// ══════════════════════════════════════════════════════════════
+
+window.handleAdminSearch   = e => console.log('Buscando:', e.target.value);
+window.toggleNotifications = () => showNotification('Sin notificaciones nuevas', 'success');
+window.openAddClassModal = function () {
+    document.getElementById('addClassForm')?.reset();
+    document.getElementById('addClassModal')?.classList.add('active');
+};
+
+window.saveNewClass = async function (e) {
+    e.preventDefault();
+    const btn = e.submitter || e.target.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+
+    const name       = document.getElementById('className')?.value.trim();
+    const instructor = document.getElementById('classInstructor')?.value.trim() || 'Roy Franco';
+    const schedule   = document.getElementById('classSchedule')?.value.trim();
+    const days       = document.getElementById('classDays')?.value.trim();
+    const capacity   = parseInt(document.getElementById('classCapacity')?.value || '20');
+    const level      = document.getElementById('classLevel')?.value || 'todos';
+    const description = document.getElementById('classDescription')?.value.trim();
+
+    try {
+        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        await addDoc(collection(db, 'classes'), {
+            name, instructor, schedule, days, capacity,
+            enrolled: 0, level, description,
+            createdAt: serverTimestamp(),
+        });
+        showNotification(`Clase "${name}" registrada correctamente`, 'success');
+        closeAdminModal('addClassModal');
+    } catch (err) {
+        showNotification('Error al guardar: ' + err.message, 'error');
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Clase'; }
+    }
+};
+window.viewClassDetails    = () => showNotification('Ver clase — próximamente', 'success');
+// manageClass is now fully implemented above
+window.sendReminder        = () => showNotification('Recordatorio enviado', 'success');
+window.sendAutoReminders   = function () {
+    const expiring = _allStudents.filter(s => {
+        const d = daysUntilExpiry(s.expiryDate);
+        return d !== null && d >= 0 && d <= 3;
+    });
+    if (expiring.length === 0) {
+        showNotification('No hay alumnos con vencimiento en los próximos 3 días', 'warning');
+        return;
+    }
+    expiring.forEach((s, i) => {
+        const phone     = (s.phone || '').replace(/\D/g, '');
+        const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
+        const amount    = PLAN_PRICES[s.plan] || 700;
+        const days      = daysUntilExpiry(s.expiryDate);
+        const daysTxt   = days === 0 ? '*hoy*' : `en *${days} día(s)* (${s.expiryDate})`;
+        const msg = `¡Hola ${s.name}! 🥊\n\nTe recordamos que tu ${PLAN_LABELS[s.plan] || s.plan} de *$${amount} MXN* vence ${daysTxt}.\n\n📅 Renueva a tiempo para seguir entrenando. 💪\n📞 686 348 4588`;
+        setTimeout(() => {
+            window.open(`https://wa.me/${intlPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+        }, i * 400);
+    });
+    showNotification(`Abriendo WhatsApp para ${expiring.length} alumno(s) con vencimiento próximo`, 'success');
+};
+window.editSchedule        = () => showNotification('Editar horarios — próximamente', 'success');
+window.downloadReport = function () {
+    const now        = new Date();
+    const dateStr    = now.toLocaleDateString('es-MX', { year:'numeric', month:'long', day:'numeric' });
+    const students   = _allStudents;
+    const active     = students.filter(s => s.remainingClasses > 0);
+    const expired    = students.filter(s => s.remainingClasses <= 0);
+    const expiring   = students.filter(s => { const d = daysUntilExpiry(s.expiryDate); return d !== null && d <= 5 && d >= 0; });
+    const newMonth   = students.filter(s => {
+        if (!s.createdAt) return false;
+        const d = s.createdAt.toDate ? s.createdAt.toDate() : new Date(s.createdAt.seconds * 1000);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+
+    // Estimated income from active students this month
+    const income = active.reduce((acc, s) => acc + (PLAN_PRICES[s.plan] || 0), 0);
+
+    const planCounts = {};
+    students.forEach(s => { planCounts[s.plan] = (planCounts[s.plan] || 0) + 1; });
+    const planRows = Object.entries(planCounts).map(([plan, count]) =>
+        `<tr><td>${PLAN_LABELS[plan] || plan}</td><td>${count}</td><td>${students.length ? Math.round(count / students.length * 100) : 0}%</td><td>$${formatMXN(count * (PLAN_PRICES[plan] || 0))}</td></tr>`
+    ).join('');
+
+    const studentRows = students.slice(0, 50).map(s => {
+        const d    = daysUntilExpiry(s.expiryDate);
+        const stat = s.remainingClasses > 0 ? 'Activo' : 'Vencido';
+        const exp  = d !== null && d <= 5 ? `⚠ ${d}d` : (s.expiryDate || '—');
+        return `<tr>
+            <td>${esc(s.name)}</td>
+            <td>${esc(s.phone || '—')}</td>
+            <td>${PLAN_LABELS[s.plan] || s.plan}</td>
+            <td>${stat}</td>
+            <td>${exp}</td>
+            <td>$${formatMXN(PLAN_PRICES[s.plan] || 0)}</td>
+        </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html lang="es"><head>
+        <meta charset="UTF-8">
+        <title>Reporte Boxeo Franco — ${dateStr}</title>
+        <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; }
+            body { font-family: Arial, sans-serif; font-size: 12px; color: #111; background: #fff; padding: 2rem; }
+            .rpt-header { border-bottom: 3px solid #E63946; padding-bottom: 1rem; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; }
+            .rpt-title { font-size: 22px; font-weight: 800; color: #E63946; letter-spacing: 2px; }
+            .rpt-subtitle { font-size: 11px; color: #666; margin-top: 3px; }
+            .rpt-date { font-size: 11px; color: #999; }
+            .rpt-section { margin-bottom: 1.5rem; }
+            .rpt-section h3 { font-size: 13px; font-weight: 700; border-left: 4px solid #E63946; padding-left: 8px; margin-bottom: 10px; color: #0F172A; }
+            .rpt-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
+            .rpt-stat { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; text-align: center; }
+            .rpt-stat strong { display: block; font-size: 22px; font-weight: 800; color: #E63946; }
+            .rpt-stat span { font-size: 10px; color: #666; }
+            table { width: 100%; border-collapse: collapse; }
+            th { background: #0F172A; color: #fff; padding: 7px 10px; text-align: left; font-size: 10px; letter-spacing: 0.5px; }
+            td { padding: 6px 10px; border-bottom: 1px solid #e2e8f0; }
+            tr:nth-child(even) td { background: #f8fafc; }
+            .rpt-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #e2e8f0; font-size: 10px; color: #999; text-align: center; }
+            @media print { body { padding: 1rem; } }
+        </style>
+    </head><body>
+        <div class="rpt-header">
+            <div>
+                <div class="rpt-title">🥊 BOXEO FRANCO</div>
+                <div class="rpt-subtitle">Reporte General del Gimnasio</div>
+            </div>
+            <div class="rpt-date">Generado: ${dateStr}</div>
+        </div>
+
+        <div class="rpt-section">
+            <h3>Resumen General</h3>
+            <div class="rpt-grid">
+                <div class="rpt-stat"><strong>${students.length}</strong><span>Total Alumnos</span></div>
+                <div class="rpt-stat"><strong>${active.length}</strong><span>Alumnos Activos</span></div>
+                <div class="rpt-stat"><strong>${expired.length}</strong><span>Vencidos</span></div>
+                <div class="rpt-stat"><strong>${expiring.length}</strong><span>Vencen en 5 días</span></div>
+                <div class="rpt-stat"><strong>${newMonth.length}</strong><span>Nuevos este mes</span></div>
+                <div class="rpt-stat" style="grid-column:span 3;"><strong style="font-size:18px;">$${formatMXN(income)}</strong><span>Ingreso estimado (alumnos activos)</span></div>
+            </div>
+        </div>
+
+        <div class="rpt-section">
+            <h3>Distribución por Plan</h3>
+            <table>
+                <thead><tr><th>Plan</th><th>Alumnos</th><th>%</th><th>Ingreso Est.</th></tr></thead>
+                <tbody>${planRows}</tbody>
+            </table>
+        </div>
+
+        <div class="rpt-section">
+            <h3>Lista de Alumnos (${students.length} total${students.length > 50 ? ' — mostrando primeros 50' : ''})</h3>
+            <table>
+                <thead><tr><th>Nombre</th><th>Teléfono</th><th>Plan</th><th>Estado</th><th>Vencimiento</th><th>Monto</th></tr></thead>
+                <tbody>${studentRows}</tbody>
+            </table>
+        </div>
+
+        <div class="rpt-footer">Reporte generado automáticamente por el sistema de gestión Boxeo Franco · ${dateStr}</div>
+        <script>window.onload = () => { window.print(); };<\/script>
+    </body></html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=700');
+    if (!w) { showNotification('Activa las ventanas emergentes para generar el PDF', 'warning'); return; }
+    w.document.write(html);
+    w.document.close();
+    showNotification('Reporte generado — usa Ctrl+P / Cmd+P para guardar como PDF', 'success');
+};
+window.openAddInventoryModal = () => showNotification('Inventario — próximamente', 'success');
+window.openAddEventModal     = () => showNotification('Eventos — próximamente', 'success');
+window.inviteToEvent         = () => showNotification('Invitación preparada', 'success');
+window.viewStudentProgress   = () => showNotification('Ver progreso — próximamente', 'success');
+window.updateStudentProgress = () => showNotification('Actualizar progreso — próximamente', 'success');
+window.exportData            = type => showNotification(`Exportando ${type}…`, 'success');
+window.markAsPaid            = id   => paymentMarkPaid(id);
+
+// ══════════════════════════════════════════════════════════════
+//  NOTIFICATION TOAST
+// ══════════════════════════════════════════════════════════════
+
+window.showNotification = function (message, type = 'success') {
+    const colors = { success: '#10B981', warning: '#F59E0B', error: '#EF4444' };
+    const icons  = { success: 'check-circle', warning: 'exclamation-triangle', error: 'exclamation-circle' };
+
+    const el = document.createElement('div');
+    el.style.cssText = `
+        position:fixed;top:80px;right:20px;padding:.85rem 1.5rem;
+        background:${colors[type]||colors.success};color:#fff;border-radius:10px;
+        box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;
+        animation:slideIn .3s ease;font-weight:500;font-size:.9rem;
+        display:flex;align-items:center;gap:.5rem;max-width:360px;
+    `;
+    el.innerHTML = `<i class="fas fa-${icons[type]||icons.success}"></i> ${message}`;
+    document.body.appendChild(el);
+
+    setTimeout(() => {
+        el.style.animation = 'slideOut .3s ease forwards';
+        setTimeout(() => el.remove(), 300);
+    }, 3500);
+};
+
+// ══════════════════════════════════════════════════════════════
+//  UTILITIES
+// ══════════════════════════════════════════════════════════════
+
+/** Set the textContent of an element by ID (no-op if missing). */
+function set(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+}
+
+/** HTML-escape a string. */
+function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/** Capitalize first letter. */
+function capitalize(str) {
+    if (!str) return '';
+    return str.charAt(0).toUpperCase() + str.slice(1);
+}

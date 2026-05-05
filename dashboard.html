@@ -1,0 +1,2336 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Dashboard — Roy Franco Box</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
+    <!-- iOS PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="RoyBox">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167x167.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120x120.png">
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#0B0F1A">
+    <meta name="msapplication-TileColor" content="#0B0F1A">
+    <meta name="msapplication-TileImage" content="icons/icon-144x144.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
+    <link rel="shortcut icon" href="icons/favicon.ico">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/modern.css">
+
+    <!-- Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
+        }
+    </script>
+</head>
+<body>
+    <!-- ========== ADMIN DASHBOARD ========== -->
+    <div class="admin-dashboard active" id="adminDashboard">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-header">
+                <img src="assets/images/logo.jpg" alt="Boxeo Franco" onerror="this.style.display='none'">
+                <h3>BOXEO FRANCO</h3>
+                <p>Panel de Administraci├│n</p>
+            </div>
+            <nav class="sidebar-menu">
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">PRINCIPAL</span>
+                    <a class="sidebar-menu-item active" onclick="showAdminPanel('dashboard')">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('students')">
+                        <i class="fas fa-users"></i>
+                        <span>Alumnos</span>
+                        <span class="badge-count" id="sidebarStudentCount">—</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('classes')">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>Clases</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('schedule')">
+                        <i class="fas fa-clock"></i>
+                        <span>Horarios</span>
+                    </a>
+                </div>
+                
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">FINANZAS</span>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('payments')">
+                        <i class="fas fa-credit-card"></i>
+                        <span>Pagos</span>
+                        <span class="badge-count badge-warning">5</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('finances')">
+                        <i class="fas fa-wallet"></i>
+                        <span>Finanzas</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('reports')">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Reportes</span>
+                    </a>
+                </div>
+                
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">COMUNICACI├ôN</span>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('messages')">
+                        <i class="fab fa-whatsapp"></i>
+                        <span>Mensajes</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('notifications')">
+                        <i class="fas fa-bell"></i>
+                        <span>Notificaciones</span>
+                        <span class="badge-count badge-info">3</span>
+                    </a>
+                </div>
+                
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">GIMNASIO</span>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('inventory')">
+                        <i class="fas fa-boxes"></i>
+                        <span>Inventario</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('events')">
+                        <i class="fas fa-trophy"></i>
+                        <span>Eventos</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('progress')">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Progreso Alumnos</span>
+                    </a>
+                </div>
+                
+                <div class="sidebar-section">
+                    <span class="sidebar-section-title">SISTEMA</span>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('settings')">
+                        <i class="fas fa-cog"></i>
+                        <span>Configuraci├│n</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="showAdminPanel('backup')">
+                        <i class="fas fa-database"></i>
+                        <span>Respaldos</span>
+                    </a>
+                    <a class="sidebar-menu-item" onclick="logoutAdmin()" style="color: var(--danger);">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Cerrar Sesi├│n</span>
+                    </a>
+                </div>
+            </nav>
+        </aside>
+        
+        <!-- Sidebar Overlay for Mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleAdminSidebar()"></div>
+
+        <!-- Main Content -->
+        <main class="admin-main">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="admin-header-left">
+                    <button class="sidebar-toggle" onclick="toggleAdminSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="adminPageTitle">Dashboard</h1>
+                </div>
+                <div class="admin-header-right">
+                    <div class="admin-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" placeholder="Buscar alumnos, clases..." id="adminSearchInput" onkeyup="handleAdminSearch(event)">
+                    </div>
+                    <div class="admin-notifications" onclick="toggleNotifications()">
+                        <i class="fas fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </div>
+                    <div class="admin-user-menu">
+                        <img src="assets/images/logo.jpg" alt="Admin" onerror="this.src='https://ui-avatars.com/api/?name=Admin&background=DC2626&color=fff'">
+                        <span>Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="admin-content">
+                <!-- Dashboard Panel -->
+                <div class="admin-panel active" id="panel-dashboard">
+                    <!-- Stats -->
+                    <div class="admin-stats-grid">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon red">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statActiveStudents">—</h3>
+                                <p>Alumnos Activos</p>
+                                <span class="trend up"><i class="fas fa-arrow-up"></i> +12 este mes</span>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon green">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statDashboardIncome">—</h3>
+                                <p>Ingresos del Mes</p>
+                                <span class="trend up"><i class="fas fa-arrow-up"></i> +8% vs anterior</span>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon yellow">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statWeeklyClasses">—</h3>
+                                <p>Clases Esta Semana</p>
+                                <span class="trend up"><i class="fas fa-arrow-up"></i> 95% asistencia</span>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon blue">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statNewStudents">—</h3>
+                                <p>Nuevos Alumnos</p>
+                                <span class="trend up"><i class="fas fa-arrow-up"></i> Esta semana</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                        <!-- Today's Classes -->
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3><i class="fas fa-calendar-day"></i> Clases de Hoy</h3>
+                                <button class="btn btn-primary btn-sm" onclick="openAddClassModal()">
+                                    <i class="fas fa-plus"></i> Nueva Clase
+                                </button>
+                            </div>
+                            <div class="admin-card-body">
+                                <div class="class-schedule-grid" id="classesTodayGrid">
+                                    <p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">Cargando alumnos del día…</p>
+                                    <!-- DEMO_REMOVED
+                                            <div class="class-time"><i class="fas fa-clock"></i> 6:00 - 7:00 AM</div>
+                                        </div>
+                                        <div class="class-card-body">
+                                            <div class="class-capacity">
+                                                <span>15/20</span>
+                                                <div class="capacity-bar">
+                                                    <div class="capacity-fill" style="width: 75%;"></div>
+                                                </div>
+                                                <span>75%</span>
+                                            </div>
+                                            <div class="class-students-list">
+                                                <div class="class-student-item">
+                                                    <div class="student-avatar">JM</div>
+                                                    <div class="class-student-info">
+                                                        <h5>Juan Mart├¡nez</h5>
+                                                        <span>Intermedio ÔÇó Mensual</span>
+                                                    </div>
+                                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                                </div>
+                                                <div class="class-student-item">
+                                                    <div class="student-avatar">MG</div>
+                                                    <div class="class-student-info">
+                                                        <h5>Mar├¡a Garc├¡a</h5>
+                                                        <span>Principiante ÔÇó Mensual</span>
+                                                    </div>
+                                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                                </div>
+                                                <div class="class-student-item">
+                                                    <div class="student-avatar">CR</div>
+                                                    <div class="class-student-info">
+                                                        <h5>Carlos Rodr├¡guez</h5>
+                                                        <span>Avanzado ÔÇó Mensual</span>
+                                                    </div>
+                                                    <i class="fas fa-clock" style="color: var(--accent);"></i>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 1rem;" onclick="viewClassDetails('6am')">
+                                                Ver Todos los Alumnos
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="class-card">
+                                        <div class="class-card-header">
+                                            <h4>Clase Tarde - Intermedio</h4>
+                                            <div class="class-time"><i class="fas fa-clock"></i> 6:00 - 7:00 PM</div>
+                                        </div>
+                                        <div class="class-card-body">
+                                            <div class="class-capacity">
+                                                <span>18/20</span>
+                                                <div class="capacity-bar">
+                                                    <div class="capacity-fill warning" style="width: 90%;"></div>
+                                                </div>
+                                                <span>90%</span>
+                                            </div>
+                                            <div class="class-students-list">
+                                                <div class="class-student-item">
+                                                    <div class="student-avatar">PL</div>
+                                                    <div class="class-student-info">
+                                                        <h5>Pedro L├│pez</h5>
+                                                        <span>Intermedio ÔÇó Semanal</span>
+                                                    </div>
+                                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                                </div>
+                                                <div class="class-student-item">
+                                                    <div class="student-avatar">AS</div>
+                                                    <div class="class-student-info">
+                                                        <h5>Ana S├ínchez</h5>
+                                                        <span>Intermedio ÔÇó Mensual</span>
+                                                    </div>
+                                                    <i class="fas fa-check-circle" style="color: var(--success);"></i>
+                                                </div>
+                                                <div class="class-student-item">
+                                                    <div class="student-avatar">RH</div>
+                                                    <div class="class-student-info">
+                                                        <h5>Roberto Hern├índez</h5>
+                                                        <span>Intermedio ÔÇó Mensual</span>
+                                                    </div>
+                                                    <i class="fas fa-times-circle" style="color: var(--danger);"></i>
+                                                </div>
+                                            </div>
+                                            <button class="btn btn-primary btn-sm" style="width: 100%; margin-top: 1rem;" onclick="viewClassDetails('6pm')">
+                                                Ver Todos los Alumnos
+                                            </button>
+                                        </div>
+                                    </div>
+                                DEMO_REMOVED -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Activity -->
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3><i class="fas fa-history"></i> Actividad Reciente</h3>
+                            </div>
+                            <div class="admin-card-body">
+                                <div class="activity-list" id="activityFeed">
+                                    <p style="text-align:center;color:var(--text-gray);padding:1rem;">Cargando actividad…</p>
+                                    <!-- DEMO_REMOVED
+                                    <div class="activity-item">
+                                        <div class="activity-icon green">
+                                            <i class="fas fa-user-plus"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <h4>Nuevo alumno registrado</h4>
+                                            <p>Luis M├®ndez se inscribi├│ - Plan Mensual</p>
+                                            <small style="color: var(--text-gray);">Hace 2 horas</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon blue">
+                                            <i class="fas fa-credit-card"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <h4>Pago recibido</h4>
+                                            <p>Mar├¡a Garc├¡a - $700 (Mensual)</p>
+                                            <small style="color: var(--text-gray);">Hace 3 horas</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon yellow">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <h4>Pago pendiente</h4>
+                                            <p>Carlos Vega - Vence ma├▒ana</p>
+                                            <small style="color: var(--text-gray);">Hace 5 horas</small>
+                                        </div>
+                                    </div>
+                                    <div class="activity-item">
+                                        <div class="activity-icon red">
+                                            <i class="fas fa-calendar-check"></i>
+                                        </div>
+                                        <div class="activity-content">
+                                            <h4>Clase completada</h4>
+                                            <p>Clase 7:00 AM - 18 asistentes</p>
+                                            <small style="color: var(--text-gray);">Hace 6 horas</small>
+                                        </div>
+                                    </div>
+                                    DEMO_REMOVED -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enrolled Students List -->
+                    <div class="admin-card" style="margin-top:1.5rem;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-id-card"></i> Alumnos Inscritos</h3>
+                            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+                                <input type="text" id="enrolledSearch" placeholder="Buscar alumno..."
+                                    oninput="filterEnrolledList()"
+                                    style="padding:.35rem .75rem;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);width:140px;">
+                                <select id="enrolledFilterPlan" onchange="filterEnrolledList()"
+                                    style="padding:.35rem .75rem;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);">
+                                    <option value="">Todos los planes</option>
+                                    <option value="diario">Por Clase</option>
+                                    <option value="semanal">Semanal</option>
+                                    <option value="mensual">Mensual</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="admin-card-body" style="padding:.5rem 0 0 0;">
+                            <div id="enrolledStudentsList" style="max-height:360px;overflow-y:auto;padding:0 1.25rem .5rem;">
+                                <p style="text-align:center;color:var(--text-gray);padding:1.5rem;">Cargando alumnos&hellip;</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pending Payments Alert -->
+                    <div class="admin-card" style="border-left: 4px solid var(--accent);">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-exclamation-circle" style="color: var(--accent);"></i> Pagos Pendientes</h3>
+                            <div style="display: flex; gap: 0.75rem; align-items: center;">
+                                <button class="btn btn-success btn-sm" onclick="sendAutoReminders()" title="Enviar recordatorios autom├íticos a quienes les faltan 3 d├¡as">
+                                    <i class="fab fa-whatsapp"></i> Enviar Recordatorios (3 d├¡as)
+                                </button>
+                                <span class="badge badge-warning" id="pendingPaymentsCount">— pendientes</span>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>Tel├®fono</th>
+                                        <th>Plan</th>
+                                        <th>Monto</th>
+                                        <th>Vencimiento</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pending-payments-table">
+                                    <tr><td colspan="6" style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando pagos pendientes…</td></tr>
+                                    <!-- DEMO_REMOVED
+                                    <tr data-days="1" data-phone="5216863484588" data-name="Carlos Vega" data-amount="700" data-plan="Mensual">
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">CV</div>
+                                                <div class="info">
+                                                    <h4>Carlos Vega</h4>
+                                                    <p>carlos.vega@email.com</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 348 4588</td>
+                                        <td>Mensual</td>
+                                        <td><strong>$700</strong></td>
+                                        <td><span class="badge badge-danger">Ma├▒ana</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-success btn-sm" onclick="markAsPaid('carlos-vega')" title="Marcar como pagado"><i class="fas fa-check"></i></button>
+                                                <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('5216863484588', 'Carlos Vega', '700', '1')" title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr data-days="3" data-phone="5216861234567" data-name="Laura Morales" data-amount="300" data-plan="Semanal">
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">LM</div>
+                                                <div class="info">
+                                                    <h4>Laura Morales</h4>
+                                                    <p>laura.m@email.com</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 123 4567</td>
+                                        <td>Semanal</td>
+                                        <td><strong>$300</strong></td>
+                                        <td><span class="badge badge-warning">3 d├¡as</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-success btn-sm" onclick="markAsPaid('laura-morales')" title="Marcar como pagado"><i class="fas fa-check"></i></button>
+                                                <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('5216861234567', 'Laura Morales', '300', '3')" title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr data-days="3" data-phone="5216869876543" data-name="Miguel ├üngel" data-amount="700" data-plan="Mensual">
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">MA</div>
+                                                <div class="info">
+                                                    <h4>Miguel ├üngel</h4>
+                                                    <p>miguel.angel@email.com</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 987 6543</td>
+                                        <td>Mensual</td>
+                                        <td><strong>$700</strong></td>
+                                        <td><span class="badge badge-warning">3 d├¡as</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-success btn-sm" onclick="markAsPaid('miguel-angel')" title="Marcar como pagado"><i class="fas fa-check"></i></button>
+                                                <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('5216869876543', 'Miguel ├üngel', '700', '3')" title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    DEMO_REMOVED -->
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students Panel -->
+                <div class="admin-panel" id="panel-students">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-users"></i> Gesti├│n de Alumnos</h3>
+                            <div class="quick-actions">
+                                <button class="btn btn-primary quick-action-btn" onclick="openAddStudentModal()">
+                                    <i class="fas fa-user-plus"></i> Nuevo Alumno
+                                </button>
+                                <button class="btn btn-secondary quick-action-btn" onclick="exportStudents()">
+                                    <i class="fas fa-download"></i> Exportar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <select id="filterLevel" onchange="filterStudents()" style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                                    <option value="">Todos los Niveles</option>
+                                    <option value="principiante">Principiante</option>
+                                    <option value="intermedio">Intermedio</option>
+                                    <option value="avanzado">Avanzado</option>
+                                </select>
+                                <select id="filterPlan" onchange="filterStudents()" style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                                    <option value="">Todos los Planes</option>
+                                    <option value="diario">Por Clase</option>
+                                    <option value="semanal">Semanal</option>
+                                    <option value="mensual">Mensual</option>
+                                </select>
+                                <select id="filterStatus" onchange="filterStudents()" style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                                    <option value="">Todos los Estados</option>
+                                    <option value="activo">Activo</option>
+                                    <option value="pendiente">Pago Pendiente</option>
+                                    <option value="inactivo">Inactivo</option>
+                                </select>
+                            </div>
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>Tel├®fono</th>
+                                        <th>Horario</th>
+                                        <th>Plan</th>
+                                        <th>Clases Restantes</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentsTableBody">
+                                    <tr>
+                                        <td colspan="7" style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando alumnos…</td>
+                                    </tr>
+                                    <!-- DEMO_REMOVED -->
+                                    <!-- <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">JM</div>
+                                                <div class="info">
+                                                    <h4>Juan Mart├¡nez</h4>
+                                                    <p>Intermedio</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 123 4567</td>
+                                        <td><span class="badge badge-warning">6:00 PM</span></td>
+                                        <td>Mensual</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                                    <div style="width: 68%; height: 100%; background: var(--success);"></div>
+                                                </div>
+                                                <strong style="color: var(--success);">15/22</strong>
+                                                <button class="btn btn-success btn-sm" onclick="registerAttendance('juan-martinez')" title="Registrar asistencia"><i class="fas fa-check"></i></button>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-success">Activo</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-primary btn-sm" onclick="viewStudent('juan-martinez')"><i class="fas fa-eye"></i></button>
+                                                <button class="btn btn-warning btn-sm" onclick="editStudent('juan-martinez')"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteStudent('juan-martinez')"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">MG</div>
+                                                <div class="info">
+                                                    <h4>Mar├¡a Garc├¡a</h4>
+                                                    <p>Principiante</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 234 5678</td>
+                                        <td><span class="badge badge-success">7:00 AM</span></td>
+                                        <td>Mensual</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                                    <div style="width: 100%; height: 100%; background: var(--success);"></div>
+                                                </div>
+                                                <strong style="color: var(--success);">22/22</strong>
+                                                <button class="btn btn-success btn-sm" onclick="registerAttendance('maria-garcia')" title="Registrar asistencia"><i class="fas fa-check"></i></button>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-success">Activo</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-primary btn-sm" onclick="viewStudent('maria-garcia')"><i class="fas fa-eye"></i></button>
+                                                <button class="btn btn-warning btn-sm" onclick="editStudent('maria-garcia')"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteStudent('maria-garcia')"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">CR</div>
+                                                <div class="info">
+                                                    <h4>Carlos Rodr├¡guez</h4>
+                                                    <p>Avanzado</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 345 6789</td>
+                                        <td><span class="badge badge-danger">6:00 PM</span></td>
+                                        <td>Mensual</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                                    <div style="width: 9%; height: 100%; background: var(--danger);"></div>
+                                                </div>
+                                                <strong style="color: var(--danger);">2/22</strong>
+                                                <button class="btn btn-success btn-sm" onclick="registerAttendance('carlos-rodriguez')" title="Registrar asistencia"><i class="fas fa-check"></i></button>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-danger">Por vencer</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-primary btn-sm" onclick="viewStudent('carlos-rodriguez')"><i class="fas fa-eye"></i></button>
+                                                <button class="btn btn-warning btn-sm" onclick="editStudent('carlos-rodriguez')"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteStudent('carlos-rodriguez')"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">PL</div>
+                                                <div class="info">
+                                                    <h4>Pedro L├│pez</h4>
+                                                    <p>Intermedio</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 456 7890</td>
+                                        <td><span class="badge badge-warning">7:00 PM</span></td>
+                                        <td>Semanal</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                                    <div style="width: 60%; height: 100%; background: var(--accent);"></div>
+                                                </div>
+                                                <strong style="color: var(--accent);">3/5</strong>
+                                                <button class="btn btn-success btn-sm" onclick="registerAttendance('pedro-lopez')" title="Registrar asistencia"><i class="fas fa-check"></i></button>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-success">Activo</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-primary btn-sm" onclick="viewStudent('pedro-lopez')"><i class="fas fa-eye"></i></button>
+                                                <button class="btn btn-warning btn-sm" onclick="editStudent('pedro-lopez')"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteStudent('pedro-lopez')"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">AS</div>
+                                                <div class="info">
+                                                    <h4>Ana S├ínchez</h4>
+                                                    <p>Intermedio</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>686 567 8901</td>
+                                        <td><span class="badge badge-warning">8:00 AM</span></td>
+                                        <td>Diario</td>
+                                        <td>
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="width: 60px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;">
+                                                    <div style="width: 100%; height: 100%; background: var(--success);"></div>
+                                                </div>
+                                                <strong style="color: var(--success);">1/1</strong>
+                                                <button class="btn btn-success btn-sm" onclick="registerAttendance('ana-sanchez')" title="Registrar asistencia"><i class="fas fa-check"></i></button>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge badge-success">Activo</span></td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-primary btn-sm" onclick="viewStudent('ana-sanchez')"><i class="fas fa-eye"></i></button>
+                                                <button class="btn btn-warning btn-sm" onclick="editStudent('ana-sanchez')"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-danger btn-sm" onclick="deleteStudent('ana-sanchez')"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    --> 
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classes Panel -->
+                <div class="admin-panel" id="panel-classes">
+                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon red">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statClassesMorning">—</h3>
+                                <p>Clases Ma&ntilde;ana</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon blue">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statClassesAfternoon">—</h3>
+                                <p>Clases Tarde</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon green">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statClassesAvgPct">—</h3>
+                                <p>Ocupaci&oacute;n Promedio</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-list"></i> Todas las Clases</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="class-schedule-grid" id="allClassesGrid">
+                                <p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">
+                                    <i class="fas fa-spinner fa-spin"></i> Cargando clases...
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Schedule Panel -->
+                <div class="admin-panel" id="panel-schedule">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-calendar-week"></i> Horario Semanal</h3>
+                            <button class="btn btn-primary" onclick="editSchedule()">
+                                <i class="fas fa-edit"></i> Editar Horarios
+                            </button>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Horario</th>
+                                        <th>Lunes</th>
+                                        <th>Martes</th>
+                                        <th>Mi├®rcoles</th>
+                                        <th>Jueves</th>
+                                        <th>Viernes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>6:00 - 7:00 AM</strong></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>7:00 - 8:00 AM</strong></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>8:00 - 9:00 AM</strong></td>
+                                        <td><span class="badge badge-success">Principiantes</span></td>
+                                        <td><span class="badge badge-success">Principiantes</span></td>
+                                        <td><span class="badge badge-success">Principiantes</span></td>
+                                        <td><span class="badge badge-success">Principiantes</span></td>
+                                        <td><span class="badge badge-success">Principiantes</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>5:00 - 6:00 PM</strong></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>6:00 - 7:00 PM</strong></td>
+                                        <td><span class="badge badge-danger">Avanzado</span></td>
+                                        <td><span class="badge badge-danger">Avanzado</span></td>
+                                        <td><span class="badge badge-danger">Avanzado</span></td>
+                                        <td><span class="badge badge-danger">Avanzado</span></td>
+                                        <td><span class="badge badge-danger">Avanzado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>7:00 - 8:00 PM</strong></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                        <td><span class="badge badge-warning">Intermedio</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>8:00 - 9:00 PM</strong></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                        <td><span class="badge badge-success">Todos</span></td>
+                                    </tr>
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Panel -->
+                <div class="admin-panel" id="panel-payments">
+                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon green">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statMonthlyIncome">—</h3>
+                                <p>Ingresos del Mes</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon yellow">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3 id="statPendingPayments">—</h3>
+                                <p>Pagos Pendientes</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon blue">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div class="admin-stat-info">
+                                <h3>+8%</h3>
+                                <p>vs Mes Anterior</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-receipt"></i> Historial de Pagos</h3>
+                            <button class="btn btn-primary" onclick="openAddPaymentModal()">
+                                <i class="fas fa-plus"></i> Registrar Pago
+                            </button>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Alumno</th>
+                                        <th>Plan</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>M├®todo</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="paymentsTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando pagos…</td>
+                                    </tr>
+                                    <!-- DEMO_REMOVED -->
+                                    <!-- <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">MG</div>
+                                                <div class="info">
+                                                    <h4>Mar├¡a Garc├¡a</h4>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>Mensual</td>
+                                        <td><strong>$700</strong></td>
+                                        <td>14 Ene 2026</td>
+                                        <td>Efectivo</td>
+                                        <td><span class="badge badge-success">Pagado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">JM</div>
+                                                <div class="info">
+                                                    <h4>Juan Mart├¡nez</h4>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>Mensual</td>
+                                        <td><strong>$700</strong></td>
+                                        <td>13 Ene 2026</td>
+                                        <td>Transferencia</td>
+                                        <td><span class="badge badge-success">Pagado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">PL</div>
+                                                <div class="info">
+                                                    <h4>Pedro L├│pez</h4>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>Semanal</td>
+                                        <td><strong>$300</strong></td>
+                                        <td>12 Ene 2026</td>
+                                        <td>Efectivo</td>
+                                        <td><span class="badge badge-success">Pagado</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="student-info-cell">
+                                                <div class="avatar">CV</div>
+                                                <div class="info">
+                                                    <h4>Carlos Vega</h4>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>Mensual</td>
+                                        <td><strong>$700</strong></td>
+                                        <td>15 Ene 2026</td>
+                                        <td>-</td>
+                                        <td><span class="badge badge-warning">Pendiente</span></td>
+                                    </tr>
+                                    -->
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Panel -->
+                <div class="admin-panel" id="panel-reports">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-chart-bar"></i> Reportes y Estad├¡sticas</h3>
+                            <div class="quick-actions">
+                                <select style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                                    <option>Este Mes</option>
+                                    <option>├Ültimo Mes</option>
+                                    <option>├Ültimos 3 Meses</option>
+                                    <option>Este A├▒o</option>
+                                </select>
+                                <button class="btn btn-secondary quick-action-btn" onclick="downloadReport()">
+                                    <i class="fas fa-download"></i> Descargar PDF
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                                <div>
+                                    <h4 style="margin-bottom: 1rem; color: var(--secondary);"><i class="fas fa-chart-pie"></i> Distribuci├│n por Plan</h4>
+                                    <div class="chart-container">
+                                        <div style="text-align: center;">
+                                            <div style="margin-bottom: 1rem;">
+                                                <div style="display: inline-block; width: 20px; height: 20px; background: var(--primary); border-radius: 4px; margin-right: 0.5rem;"></div>
+                                                Mensual: 75%
+                                            </div>
+                                            <div style="margin-bottom: 1rem;">
+                                                <div style="display: inline-block; width: 20px; height: 20px; background: var(--accent); border-radius: 4px; margin-right: 0.5rem;"></div>
+                                                Semanal: 20%
+                                            </div>
+                                            <div>
+                                                <div style="display: inline-block; width: 20px; height: 20px; background: var(--success); border-radius: 4px; margin-right: 0.5rem;"></div>
+                                                Diario: 5%
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 1rem; color: var(--secondary);"><i class="fas fa-users"></i> Asistencia Promedio por Horario</h4>
+                                    <div style="padding: 1rem;">
+                                        <div style="margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span>6:00 AM</span>
+                                                <span>75%</span>
+                                            </div>
+                                            <div style="height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+                                                <div style="width: 75%; height: 100%; background: var(--success);"></div>
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span>7:00 AM</span>
+                                                <span>60%</span>
+                                            </div>
+                                            <div style="height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+                                                <div style="width: 60%; height: 100%; background: var(--success);"></div>
+                                            </div>
+                                        </div>
+                                        <div style="margin-bottom: 1rem;">
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span>6:00 PM</span>
+                                                <span>90%</span>
+                                            </div>
+                                            <div style="height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+                                                <div style="width: 90%; height: 100%; background: var(--accent);"></div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                                <span>7:00 PM</span>
+                                                <span>85%</span>
+                                            </div>
+                                            <div style="height: 10px; background: var(--border); border-radius: 5px; overflow: hidden;">
+                                                <div style="width: 85%; height: 100%; background: var(--success);"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Panel -->
+                <div class="admin-panel" id="panel-settings">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-cog"></i> Configuraci├│n del Sistema</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="admin-form-grid">
+                                <div class="admin-form-group">
+                                    <label>Nombre del Gimnasio</label>
+                                    <input type="text" value="Roy Franco Box">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Tel├®fono de Contacto</label>
+                                    <input type="tel" value="686 348 4588">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Email</label>
+                                    <input type="email" value="royfabianf@gmail.com">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Direcci├│n</label>
+                                    <input type="text" value="Av. Quer├®taro #2201, Mexicali">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Capacidad M├íxima por Clase</label>
+                                    <input type="number" value="20">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Precio Plan Mensual</label>
+                                    <input type="number" value="700">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Precio Plan Semanal</label>
+                                    <input type="number" value="300">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Precio Plan Diario</label>
+                                    <input type="number" value="100">
+                                </div>
+                            </div>
+                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="saveSettings()">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-user-shield"></i> Configuraci├│n de Admin</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="admin-form-grid">
+                                <div class="admin-form-group">
+                                    <label>Email de Administrador</label>
+                                    <input type="email" value="admin@royfrancobox.com">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Nueva Contrase├▒a</label>
+                                    <input type="password" placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó">
+                                </div>
+                            </div>
+                            <button class="btn btn-warning" style="margin-top: 1rem;" onclick="updateAdminCredentials()">
+                                <i class="fas fa-key"></i> Actualizar Credenciales
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Secret code card -->
+                    <div class="admin-card" style="margin-top:1.5rem;border-left:4px solid var(--primary);">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-key" style="color:var(--primary);"></i> C&oacute;digo Secreto de Registro</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <p style="color:var(--text-gray);font-size:.9rem;margin-bottom:1.25rem;">
+                                Este c&oacute;digo es necesario para crear nuevas cuentas de administrador desde la p&aacute;gina de login.
+                                G&uacute;ardalo en un lugar seguro y comp&aacute;rtelo solo con personas de confianza.
+                            </p>
+                            <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;">
+                                <div class="admin-form-group" style="flex:1;min-width:220px;margin:0;">
+                                    <label>C&oacute;digo actual</label>
+                                    <div style="position:relative;">
+                                        <input type="password" id="secretCodeInput"
+                                            placeholder="Sin c&oacute;digo configurado"
+                                            style="width:100%;padding-right:3rem;">
+                                        <button type="button" onclick="toggleSecretCodeVisibility()"
+                                            style="position:absolute;right:.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-gray);">
+                                            <i class="fas fa-eye" id="secretCodeEyeIcon"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="saveSecretCode()" style="white-space:nowrap;">
+                                    <i class="fas fa-save"></i> Guardar C&oacute;digo
+                                </button>
+                            </div>
+                            <p id="secretCodeStatus" style="margin-top:.75rem;font-size:.85rem;"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== FINANCES PANEL ========== -->
+                <div class="admin-panel" id="panel-finances">
+                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+                        <div class="admin-stat-card" style="border-left: 4px solid var(--success);">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                                <i class="fas fa-arrow-up"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statFinanceIncome">—</h3>
+                                <p>Ingresos del Mes</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left: 4px solid var(--danger);">
+                            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.1); color: var(--danger);">
+                                <i class="fas fa-arrow-down"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statFinanceExpense">—</h3>
+                                <p>Gastos del Mes</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card" style="border-left: 4px solid #3b82f6;">
+                            <div class="stat-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                                <i class="fas fa-balance-scale"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3 id="statFinanceBalance">—</h3>
+                                <p>Balance Neto</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-grid-2">
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3><i class="fas fa-plus-circle" style="color: var(--success);"></i> Registrar Ingreso</h3>
+                            </div>
+                            <div class="admin-card-body">
+                                <div class="admin-form-group">
+                                    <label>Concepto</label>
+                                    <select id="incomeConceptSelect">
+                                        <option value="mensualidad">Mensualidad</option>
+                                        <option value="semanal">Plan Semanal</option>
+                                        <option value="diario">Pase Diario</option>
+                                        <option value="venta-vendas">Venta Vendas</option>
+                                        <option value="venta-guantes">Venta Guantes</option>
+                                        <option value="venta-agua">Venta Agua/Bebidas</option>
+                                        <option value="equipo">Venta de Equipo</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Forma de Pago</label>
+                                    <select id="incomeMethodSelect">
+                                        <option value="efectivo">Efectivo</option>
+                                        <option value="transferencia">Transferencia</option>
+                                        <option value="tarjeta">Tarjeta</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Monto</label>
+                                    <input id="incomeAmountInput" type="number" placeholder="$0.00">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Alumno (opcional)</label>
+                                    <input id="incomeStudentInput" type="text" placeholder="Nombre del alumno">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Notas</label>
+                                    <textarea id="incomeNotesInput" placeholder="Descripci&oacute;n adicional..."></textarea>
+                                </div>
+                                <button class="btn btn-success" style="width: 100%;" onclick="registerIncome()">
+                                    <i class="fas fa-plus"></i> Registrar Ingreso
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="admin-card">
+                            <div class="admin-card-header">
+                                <h3><i class="fas fa-minus-circle" style="color: var(--danger);"></i> Registrar Gasto</h3>
+                            </div>
+                            <div class="admin-card-body">
+                                <div class="admin-form-group">
+                                    <label>Categoría</label>
+                                    <select id="expenseConceptInput">
+                                        <option value="renta">Renta</option>
+                                        <option value="luz">Luz</option>
+                                        <option value="agua">Agua</option>
+                                        <option value="internet">Internet / Tel&eacute;fono</option>
+                                        <option value="compra-vendas">Compra de Vendas</option>
+                                        <option value="compra-guantes">Compra de Guantes</option>
+                                        <option value="compra-agua">Compra de Agua/Bebidas</option>
+                                        <option value="equipo">Equipo / Material</option>
+                                        <option value="mantenimiento">Mantenimiento</option>
+                                        <option value="nomina">N&oacute;mina</option>
+                                        <option value="publicidad">Publicidad</option>
+                                        <option value="otro">Otro</option>
+                                    </select>
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Monto</label>
+                                    <input id="expenseAmountInput" type="number" placeholder="$0.00">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Proveedor</label>
+                                    <input id="expenseNotesInput" type="text" placeholder="Nombre del proveedor">
+                                </div>
+                                <div class="admin-form-group">
+                                    <label>Notas</label>
+                                    <textarea id="expenseExtraNotesInput" placeholder="Descripción adicional..."></textarea>
+                                </div>
+                                <button class="btn btn-danger" style="width: 100%;" onclick="registerExpense()">
+                                    <i class="fas fa-minus"></i> Registrar Gasto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="margin-top: 2rem;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-history"></i> Historial de Movimientos</h3>
+                            <div class="quick-actions">
+<span id="financeMonthLabel" style="padding:.5rem .75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:.88rem;color:var(--text-gray);">
+                                    Este mes
+                                </span>
+                                <button class="btn btn-secondary btn-sm" onclick="exportFinances()">
+                                    <i class="fas fa-download"></i> Exportar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Concepto / M&eacute;todo</th>
+                                        <th>Tipo</th>
+                                        <th>Notas</th>
+                                        <th>Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="financesTableBody">
+                                    <tr><td colspan="4" style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando movimientos…</td></tr>
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== MESSAGES PANEL ========== -->
+                <div class="admin-panel" id="panel-messages">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fab fa-whatsapp" style="color: #25D366;"></i> Mensajes Masivos por WhatsApp</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="message-templates">
+                                <h4 style="margin-bottom: 1rem; color: var(--text-gray);">Plantillas R├ípidas</h4>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                                    <button class="template-btn" onclick="useTemplate('recordatorio')">
+                                        <i class="fas fa-bell"></i>
+                                        <span>Recordatorio de Pago</span>
+                                    </button>
+                                    <button class="template-btn" onclick="useTemplate('cancelacion')">
+                                        <i class="fas fa-times-circle"></i>
+                                        <span>Cancelaci├│n de Clase</span>
+                                    </button>
+                                    <button class="template-btn" onclick="useTemplate('promocion')">
+                                        <i class="fas fa-tag"></i>
+                                        <span>Promoci├│n Especial</span>
+                                    </button>
+                                    <button class="template-btn" onclick="useTemplate('evento')">
+                                        <i class="fas fa-trophy"></i>
+                                        <span>Invitaci├│n a Evento</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="admin-form-group">
+                                <label>Destinatarios</label>
+                                <select id="messageRecipients">
+                                    <option value="todos">Todos los Alumnos</option>
+                                    <option value="activos">Solo Alumnos Activos</option>
+                                    <option value="pendientes">Alumnos con Pago Pendiente</option>
+                                    <option value="nuevos">Alumnos Nuevos (├║ltimo mes)</option>
+                                </select>
+                            </div>
+                            <div class="admin-form-group">
+                                <label>Mensaje</label>
+                                <textarea id="massMessageText" rows="6" placeholder="Escribe tu mensaje aqu├¡...
+
+Puedes usar variables como:
+{nombre} - Nombre del alumno
+{fecha_vencimiento} - Fecha de vencimiento
+{monto} - Monto pendiente"></textarea>
+                            </div>
+                            <div style="display: flex; gap: 1rem;">
+                                <button class="btn btn-whatsapp" style="flex: 1;" onclick="sendMassWhatsApp()">
+                                    <i class="fab fa-whatsapp"></i> Enviar a Todos
+                                </button>
+                                <button class="btn btn-secondary" onclick="previewMessage()">
+                                    <i class="fas fa-eye"></i> Vista Previa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="margin-top: 2rem;">
+                        <div class="admin-card-header">
+                            <h3><i class="fab fa-whatsapp" style="color:#25D366;"></i> Mensaje Individual a Alumno</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="admin-form-group">
+                                <label>Buscar alumno</label>
+                                <input type="text" id="indivWaSearch" placeholder="Escribe el nombre..." oninput="filterIndivWaList()">
+                            </div>
+                            <div id="indivWaList" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:.5rem;">
+                                <p style="text-align:center;color:var(--text-gray);padding:1.5rem;">Cargando alumnos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== NOTIFICATIONS PANEL ========== -->
+                <div class="admin-panel" id="panel-notifications">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-birthday-cake" style="color: var(--accent);"></i> Cumplea├▒os Este Mes</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="birthday-list" id="birthdayList">
+                                <p style="text-align:center;color:var(--text-gray);padding:1rem;">Cargando cumpleaños…</p>
+                                <!-- DEMO_REMOVED
+                                <div class="birthday-item">
+                                    <div class="birthday-avatar">JM</div>
+                                    <div class="birthday-info">
+                                        <h4>Juan Mart├¡nez</h4>
+                                        <p>Cumple el 18 de Enero</p>
+                                    </div>
+                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216863484588', 'Juan Mart├¡nez')">
+                                        <i class="fab fa-whatsapp"></i> Felicitar
+                                    </button>
+                                </div>
+                                <div class="birthday-item">
+                                    <div class="birthday-avatar">MG</div>
+                                    <div class="birthday-info">
+                                        <h4>Mar├¡a Garc├¡a</h4>
+                                        <p>Cumple el 22 de Enero</p>
+                                    </div>
+                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216861234567', 'Mar├¡a Garc├¡a')">
+                                        <i class="fab fa-whatsapp"></i> Felicitar
+                                    </button>
+                                </div>
+                                <div class="birthday-item">
+                                    <div class="birthday-avatar">CR</div>
+                                    <div class="birthday-info">
+                                        <h4>Carlos Rodr├¡guez</h4>
+                                        <p>Cumple el 28 de Enero</p>
+                                    </div>
+                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216869876543', 'Carlos Rodr├¡guez')">
+                                        <i class="fab fa-whatsapp"></i> Felicitar
+                                    </button>
+                                </div>
+                                DEMO_REMOVED -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="margin-top: 2rem;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-bell" style="color: #3b82f6;"></i> Notificaciones Autom├íticas</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="notification-settings">
+                                <div class="notification-option">
+                                    <div class="notification-option-info">
+                                        <h4>Recordatorio 3 d├¡as antes de vencimiento</h4>
+                                        <p>Enviar WhatsApp autom├ítico cuando falten 3 d├¡as para que venza el pago</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="notification-option-info">
+                                        <h4>Recordatorio d├¡a de vencimiento</h4>
+                                        <p>Enviar recordatorio el d├¡a exacto del vencimiento</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="notification-option-info">
+                                        <h4>Felicitaciones de cumplea├▒os</h4>
+                                        <p>Enviar mensaje autom├ítico de felicitaci├│n</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                                <div class="notification-option">
+                                    <div class="notification-option-info">
+                                        <h4>Bienvenida a nuevos alumnos</h4>
+                                        <p>Mensaje de bienvenida al registrar nuevo alumno</p>
+                                    </div>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== INVENTORY PANEL ========== -->
+                <div class="admin-panel" id="panel-inventory">
+                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+                        <div class="admin-stat-card">
+                            <div class="stat-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--primary);">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>156</h3>
+                                <p>Items en Inventario</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>8</h3>
+                                <p>Stock Bajo</p>
+                            </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>148</h3>
+                                <p>En Buen Estado</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-boxes"></i> Inventario de Equipo</h3>
+                            <button class="btn btn-primary" onclick="openAddInventoryModal()">
+                                <i class="fas fa-plus"></i> Agregar Item
+                            </button>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item</th>
+                                        <th>Categor├¡a</th>
+                                        <th>Cantidad</th>
+                                        <th>Estado</th>
+                                        <th>├Ültima Revisi├│n</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>Guantes de Boxeo 12oz</strong></td>
+                                        <td>Equipo Personal</td>
+                                        <td>24 pares</td>
+                                        <td><span class="badge badge-success">Bueno</span></td>
+                                        <td>10/01/2026</td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Vendas para Manos</strong></td>
+                                        <td>Equipo Personal</td>
+                                        <td>50 pares</td>
+                                        <td><span class="badge badge-success">Bueno</span></td>
+                                        <td>10/01/2026</td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Sacos de Boxeo</strong></td>
+                                        <td>Equipo Fijo</td>
+                                        <td>8 unidades</td>
+                                        <td><span class="badge badge-warning">Revisar</span></td>
+                                        <td>05/01/2026</td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Peras de Velocidad</strong></td>
+                                        <td>Equipo Fijo</td>
+                                        <td>4 unidades</td>
+                                        <td><span class="badge badge-danger">Bajo Stock</span></td>
+                                        <td>08/01/2026</td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Cabezales de Protecci├│n</strong></td>
+                                        <td>Equipo Personal</td>
+                                        <td>15 unidades</td>
+                                        <td><span class="badge badge-success">Bueno</span></td>
+                                        <td>10/01/2026</td>
+                                        <td>
+                                            <div class="action-btns">
+                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== EVENTS PANEL ========== -->
+                <div class="admin-panel" id="panel-events">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-trophy" style="color: var(--accent);"></i> Eventos y Torneos</h3>
+                            <button class="btn btn-primary" onclick="openAddEventModal()">
+                                <i class="fas fa-plus"></i> Nuevo Evento
+                            </button>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="events-grid">
+                                <div class="event-card upcoming">
+                                    <div class="event-date">
+                                        <span class="day">25</span>
+                                        <span class="month">ENE</span>
+                                    </div>
+                                    <div class="event-info">
+                                        <h4>Torneo Interno de Box</h4>
+                                        <p><i class="fas fa-map-marker-alt"></i> Gimnasio Principal</p>
+                                        <p><i class="fas fa-users"></i> 24 participantes inscritos</p>
+                                    </div>
+                                    <div class="event-actions">
+                                        <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('Torneo Interno de Box', '25 de Enero')">
+                                            <i class="fab fa-whatsapp"></i> Invitar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="event-card upcoming">
+                                    <div class="event-date">
+                                        <span class="day">14</span>
+                                        <span class="month">FEB</span>
+                                    </div>
+                                    <div class="event-info">
+                                        <h4>Exhibici├│n San Valent├¡n</h4>
+                                        <p><i class="fas fa-map-marker-alt"></i> Centro de Convenciones</p>
+                                        <p><i class="fas fa-users"></i> 12 participantes inscritos</p>
+                                    </div>
+                                    <div class="event-actions">
+                                        <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('Exhibici├│n San Valent├¡n', '14 de Febrero')">
+                                            <i class="fab fa-whatsapp"></i> Invitar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="event-card past">
+                                    <div class="event-date">
+                                        <span class="day">20</span>
+                                        <span class="month">DIC</span>
+                                    </div>
+                                    <div class="event-info">
+                                        <h4>Torneo Navide├▒o</h4>
+                                        <p><i class="fas fa-map-marker-alt"></i> Gimnasio Principal</p>
+                                        <p><i class="fas fa-trophy"></i> Completado</p>
+                                    </div>
+                                    <div class="event-actions">
+                                        <button class="btn btn-secondary btn-sm">
+                                            <i class="fas fa-eye"></i> Ver Resultados
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== PROGRESS PANEL ========== -->
+                <div class="admin-panel" id="panel-progress">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-chart-line" style="color: var(--success);"></i> Progreso de Alumnos</h3>
+                            <div class="quick-actions">
+                                <input type="text" placeholder="Buscar alumno..." style="padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px;">
+                            </div>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="progress-list" id="progressList">
+                                <p style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando alumnos…</p>
+                                <!-- DEMO_REMOVED
+                                <div class="progress-item">
+                                    <div class="progress-avatar">JM</div>
+                                    <div class="progress-info">
+                                        <h4>Juan Mart├¡nez</h4>
+                                        <p>Nivel: Intermedio | Inicio: 15/06/2025</p>
+                                        <div class="progress-stats">
+                                            <span><i class="fas fa-calendar-check"></i> 85 clases asistidas</span>
+                                            <span><i class="fas fa-weight"></i> 72 kg</span>
+                                            <span><i class="fas fa-fire"></i> 6 meses activo</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-actions">
+                                        <button class="btn btn-secondary btn-sm" onclick="viewStudentProgress('juan-martinez')">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" onclick="updateStudentProgress('juan-martinez')">
+                                            <i class="fas fa-edit"></i> Actualizar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="progress-item">
+                                    <div class="progress-avatar">MG</div>
+                                    <div class="progress-info">
+                                        <h4>Mar├¡a Garc├¡a</h4>
+                                        <p>Nivel: Avanzado | Inicio: 10/01/2024</p>
+                                        <div class="progress-stats">
+                                            <span><i class="fas fa-calendar-check"></i> 245 clases asistidas</span>
+                                            <span><i class="fas fa-weight"></i> 58 kg</span>
+                                            <span><i class="fas fa-fire"></i> 24 meses activo</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-actions">
+                                        <button class="btn btn-secondary btn-sm" onclick="viewStudentProgress('maria-garcia')">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" onclick="updateStudentProgress('maria-garcia')">
+                                            <i class="fas fa-edit"></i> Actualizar
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="progress-item">
+                                    <div class="progress-avatar">CR</div>
+                                    <div class="progress-info">
+                                        <h4>Carlos Rodr├¡guez</h4>
+                                        <p>Nivel: Principiante | Inicio: 01/12/2025</p>
+                                        <div class="progress-stats">
+                                            <span><i class="fas fa-calendar-check"></i> 18 clases asistidas</span>
+                                            <span><i class="fas fa-weight"></i> 80 kg</span>
+                                            <span><i class="fas fa-fire"></i> 1 mes activo</span>
+                                        </div>
+                                    </div>
+                                    <div class="progress-actions">
+                                        <button class="btn btn-secondary btn-sm" onclick="viewStudentProgress('carlos-rodriguez')">
+                                            <i class="fas fa-eye"></i> Ver Detalle
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" onclick="updateStudentProgress('carlos-rodriguez')">
+                                            <i class="fas fa-edit"></i> Actualizar
+                                        </button>
+                                    </div>
+                                </div>
+                                DEMO_REMOVED -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ========== BACKUP PANEL ========== -->
+                <div class="admin-panel" id="panel-backup">
+                    <div class="admin-card">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-database" style="color: #3b82f6;"></i> Respaldo de Datos</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="backup-options">
+                                <div class="backup-option">
+                                    <div class="backup-icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <div class="backup-info">
+                                        <h4>Exportar Alumnos</h4>
+                                        <p>Lista completa de alumnos con informaci├│n de contacto</p>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="exportData('students')">
+                                        <i class="fas fa-download"></i> Descargar Excel
+                                    </button>
+                                </div>
+                                <div class="backup-option">
+                                    <div class="backup-icon">
+                                        <i class="fas fa-credit-card"></i>
+                                    </div>
+                                    <div class="backup-info">
+                                        <h4>Exportar Pagos</h4>
+                                        <p>Historial completo de pagos y transacciones</p>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="exportData('payments')">
+                                        <i class="fas fa-download"></i> Descargar Excel
+                                    </button>
+                                </div>
+                                <div class="backup-option">
+                                    <div class="backup-icon">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                    <div class="backup-info">
+                                        <h4>Exportar Asistencias</h4>
+                                        <p>Registro de asistencia de todos los alumnos</p>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="exportData('attendance')">
+                                        <i class="fas fa-download"></i> Descargar Excel
+                                    </button>
+                                </div>
+                                <div class="backup-option">
+                                    <div class="backup-icon">
+                                        <i class="fas fa-file-archive"></i>
+                                    </div>
+                                    <div class="backup-info">
+                                        <h4>Respaldo Completo</h4>
+                                        <p>Toda la informaci├│n del sistema en un solo archivo</p>
+                                    </div>
+                                    <button class="btn btn-success" onclick="exportData('all')">
+                                        <i class="fas fa-download"></i> Descargar Todo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="admin-card" style="margin-top: 2rem;">
+                        <div class="admin-card-header">
+                            <h3><i class="fas fa-history"></i> Historial de Respaldos</h3>
+                        </div>
+                        <div class="admin-card-body">
+                            <div class="table-responsive"><table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo</th>
+                                        <th>Tama├▒o</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>15/01/2026 10:30</td>
+                                        <td>Respaldo Completo</td>
+                                        <td>2.4 MB</td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>10/01/2026 09:00</td>
+                                        <td>Alumnos</td>
+                                        <td>156 KB</td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>01/01/2026 00:00</td>
+                                        <td>Respaldo Completo</td>
+                                        <td>2.1 MB</td>
+                                        <td>
+                                            <button class="btn btn-secondary btn-sm"><i class="fas fa-download"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div class="admin-modal" id="addStudentModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-user-plus"></i> Registrar Nuevo Alumno</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('addStudentModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="addStudentForm" onsubmit="saveNewStudent(event)">
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label>Nombre Completo *</label>
+                            <input type="text" id="newStudentName" required placeholder="Nombre del alumno">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Email *</label>
+                            <input type="email" id="newStudentEmail" required placeholder="email@ejemplo.com">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Tel├®fono *</label>
+                            <input type="tel" id="newStudentPhone" required placeholder="686 123 4567">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Nivel *</label>
+                            <select id="newStudentLevel" required>
+                                <option value="">Seleccionar nivel</option>
+                                <option value="principiante">Principiante</option>
+                                <option value="intermedio">Intermedio</option>
+                                <option value="avanzado">Avanzado</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Plan *</label>
+                            <select id="newStudentPlan" required onchange="updateClassesPreview()">
+                                <option value="">Seleccionar plan</option>
+                                <option value="diario" data-classes="1" data-price="100">Por Clase - $100 (1 clase)</option>
+                                <option value="semanal" data-classes="5" data-price="300">Semanal - $300 (5 clases)</option>
+                                <option value="mensual" data-classes="22" data-price="700">Mensual - $700 (22 clases)</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Horario Asignado *</label>
+                            <select id="newStudentSchedule" required>
+                                <option value="">Seleccionar horario</option>
+                                <option value="6:00 - 7:00 AM">6:00 - 7:00 AM</option>
+                                <option value="7:00 - 8:00 AM">7:00 - 8:00 AM</option>
+                                <option value="8:00 - 9:00 AM">8:00 - 9:00 AM</option>
+                                <option value="5:00 - 6:00 PM">5:00 - 6:00 PM</option>
+                                <option value="6:00 - 7:00 PM">6:00 - 7:00 PM</option>
+                                <option value="7:00 - 8:00 PM">7:00 - 8:00 PM</option>
+                                <option value="8:00 - 9:00 PM">8:00 - 9:00 PM</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Fecha de Inicio *</label>
+                            <input type="date" id="newStudentStartDate" required onchange="updateClassesPreview()">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Fecha de Nacimiento</label>
+                            <input type="date" id="newStudentBirthday">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>M&eacute;todo de Pago *</label>
+                            <select id="newStudentPaymentMethod" required>
+                                <option value="">Seleccionar m&eacute;todo</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Classes Preview Box -->
+                    <div class="classes-info-box" id="classesPreviewBox" style="display: none;">
+                        <h4>CLASES ASIGNADAS</h4>
+                        <div class="classes-number" id="classesPreviewNumber">0</div>
+                        <p id="classesPreviewText">Selecciona un plan</p>
+                    </div>
+
+                    <div class="admin-form-group">
+                        <label>C├│digo de Comprobante (si aplica)</label>
+                        <input type="text" id="newStudentReceiptCode" placeholder="Ej: RFB-2026011412345">
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Notas</label>
+                        <textarea id="newStudentNotes" placeholder="Notas adicionales sobre el alumno..." rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('addStudentModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="document.getElementById('addStudentForm').requestSubmit()">
+                    <i class="fas fa-save"></i> Registrar Alumno
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== VIEW STUDENT MODAL =============== -->
+    <div class="admin-modal" id="viewStudentModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-user"></i> Detalle del Alumno</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('viewStudentModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <div class="admin-form-grid">
+                    <div class="admin-form-group"><label>Nombre</label><p id="viewStudentName" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Email</label><p id="viewStudentEmail" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Tel&eacute;fono</label><p id="viewStudentPhone" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Nivel</label><p id="viewStudentLevel" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Plan</label><p id="viewStudentPlan" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Horario</label><p id="viewStudentSchedule" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Clases Restantes</label><p id="viewStudentClasses" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Estado</label><p id="viewStudentStatus" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Fecha Inicio</label><p id="viewStudentStart" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Fecha Vencimiento</label><p id="viewStudentExpiry" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Cumplea&ntilde;os</label><p id="viewStudentBirthday" class="modal-value"></p></div>
+                    <div class="admin-form-group"><label>Asistencias</label><p id="viewStudentAttended" class="modal-value"></p></div>
+                </div>
+                <div class="admin-form-group"><label>Notas</label><p id="viewStudentNotes" class="modal-value"></p></div>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('viewStudentModal')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== EDIT STUDENT MODAL =============== -->
+    <div class="admin-modal" id="editStudentModal">
+        <div class="admin-modal-content">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-user-edit"></i> Editar Alumno</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('editStudentModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="editStudentForm" onsubmit="saveEditStudent(event)">
+                    <input type="hidden" id="editStudentId">
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group"><label>Nombre Completo *</label><input type="text" id="editStudentName" required></div>
+                        <div class="admin-form-group"><label>Email</label><input type="email" id="editStudentEmail"></div>
+                        <div class="admin-form-group"><label>Tel&eacute;fono</label><input type="tel" id="editStudentPhone"></div>
+                        <div class="admin-form-group">
+                            <label>Nivel</label>
+                            <select id="editStudentLevel">
+                                <option value="principiante">Principiante</option>
+                                <option value="intermedio">Intermedio</option>
+                                <option value="avanzado">Avanzado</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Plan</label>
+                            <select id="editStudentPlan">
+                                <option value="diario">Por Clase - $100</option>
+                                <option value="semanal">Semanal - $300</option>
+                                <option value="mensual">Mensual - $700</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group"><label>Horario</label><input type="text" id="editStudentSchedule"></div>
+                        <div class="admin-form-group"><label>Fecha Inicio</label><input type="date" id="editStudentStartDate"></div>
+                        <div class="admin-form-group"><label>Fecha de Nacimiento</label><input type="date" id="editStudentBirthday"></div>
+                        <div class="admin-form-group"><label>Clases Restantes</label><input type="number" id="editStudentClasses" min="0"></div>
+                    </div>
+                    <div class="admin-form-group"><label>Notas</label><textarea id="editStudentNotes" rows="3"></textarea></div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('editStudentModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="document.getElementById('editStudentForm').requestSubmit()">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== ADD PAYMENT MODAL =============== -->
+    <div class="admin-modal" id="addPaymentModal">
+        <div class="admin-modal-content" style="max-width:520px;">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-credit-card"></i> Registrar Pago</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('addPaymentModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="addPaymentForm" onsubmit="saveNewPayment(event)">
+                    <div class="admin-form-group">
+                        <label>Alumno *</label>
+                        <select id="paymentStudentSelect"><option value="">Seleccionar alumno</option></select>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>O escribe el nombre manualmente</label>
+                        <input type="text" id="paymentStudentManual" placeholder="Nombre del alumno (si no est&aacute; en la lista)">
+                    </div>
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label>Plan *</label>
+                            <select id="paymentPlan">
+                                <option value="diario">Por Clase - $100</option>
+                                <option value="semanal">Semanal - $300</option>
+                                <option value="mensual" selected>Mensual - $700</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Monto ($MXN) *</label>
+                            <input type="number" id="paymentAmount" placeholder="700" min="1" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>M&eacute;todo de Pago *</label>
+                            <select id="paymentMethod">
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta">Tarjeta</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Notas (opcional)</label>
+                        <input type="text" id="paymentNotes" placeholder="Observaciones...">
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('addPaymentModal')">Cancelar</button>
+                <button class="btn btn-success" onclick="document.getElementById('addPaymentForm').requestSubmit()">
+                    <i class="fas fa-save"></i> Registrar Pago
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== NUEVA CLASE MODAL =============== -->
+    <div class="admin-modal" id="addClassModal">
+        <div class="admin-modal-content" style="max-width:560px;">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-calendar-plus"></i> Registrar Nueva Clase</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('addClassModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="addClassForm" onsubmit="saveNewClass(event)">
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label>Nombre de la Clase *</label>
+                            <input type="text" id="className" placeholder="Ej: Boxeo Intermedio" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Instructor</label>
+                            <input type="text" id="classInstructor" placeholder="Ej: Roy Franco">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Horario *</label>
+                            <input type="text" id="classSchedule" placeholder="Ej: 6:00 AM – 7:00 AM" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>D&iacute;as</label>
+                            <input type="text" id="classDays" placeholder="Ej: Lun, Mi&eacute;, Vie">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Cupo M&aacute;ximo</label>
+                            <input type="number" id="classCapacity" min="1" max="100" placeholder="20">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Nivel</label>
+                            <select id="classLevel">
+                                <option value="todos">Todos los niveles</option>
+                                <option value="principiante">Principiante</option>
+                                <option value="intermedio">Intermedio</option>
+                                <option value="avanzado">Avanzado</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Descripci&oacute;n (opcional)</label>
+                        <textarea id="classDescription" rows="2" placeholder="Notas sobre la clase..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('addClassModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="document.getElementById('addClassForm').requestSubmit()">
+                    <i class="fas fa-save"></i> Guardar Clase
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== REPORTE PDF (print view) =============== -->
+    <div id="reportPrintView" style="display:none;">
+        <div id="reportPrintContent"></div>
+    </div>
+
+
+    <!-- =============== MANAGE CLASS MODAL =============== -->
+    <div class="admin-modal" id="manageClassModal">
+        <div class="admin-modal-content" style="max-width:600px;">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-cog"></i> <span id="manageClassTitle">Clase</span></h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('manageClassModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <div id="manageClassInfo"></div>
+                <h4 style="font-size:.9rem;font-weight:700;margin-bottom:.75rem;color:var(--text);">
+                    <i class="fas fa-users"></i> Alumnos Inscritos
+                </h4>
+                <div id="manageClassStudents" style="max-height:360px;overflow-y:auto;"></div>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('manageClassModal')">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =============== RENEW SUBSCRIPTION MODAL =============== -->
+    <div class="admin-modal" id="renewModal">
+        <div class="admin-modal-content" style="max-width:440px;">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-sync-alt"></i> Renovar Suscripci&oacute;n</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('renewModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <p style="margin-bottom:1rem;font-weight:600;font-size:1rem;" id="renewStudentName"></p>
+                <input type="hidden" id="renewStudentId">
+                <form id="renewForm" onsubmit="saveRenew(event)">
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label>Nuevo Plan *</label>
+                            <select id="renewPlan">
+                                <option value="diario">Por Clase — $100</option>
+                                <option value="semanal">Semanal — $300</option>
+                                <option value="mensual">Mensual — $700</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Fecha de Inicio</label>
+                            <input type="date" id="renewStartDate">
+                        </div>
+                        <div class="admin-form-group" style="grid-column:span 2;">
+                            <label>Forma de Pago *</label>
+                            <select id="renewPaymentMethod">
+                                <option value="">Seleccionar...</option>
+                                <option value="efectivo">Efectivo</option>
+                                <option value="transferencia">Transferencia</option>
+                                <option value="tarjeta">Tarjeta</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('renewModal')">Cancelar</button>
+                <button class="btn btn-success" onclick="document.getElementById('renewForm').requestSubmit()">
+                    <i class="fas fa-sync-alt"></i> Renovar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== CUSTOM WHATSAPP MODAL =============== -->
+    <div class="admin-modal" id="customWaModal">
+        <div class="admin-modal-content" style="max-width:500px;">
+            <div class="admin-modal-header">
+                <h3><i class="fab fa-whatsapp" style="color:#25D366;"></i> Mensaje a <span id="customWaStudentName"></span></h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('customWaModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <input type="hidden" id="customWaStudentId">
+                <div class="admin-form-group">
+                    <label>Mensaje</label>
+                    <textarea id="customWaText" rows="8" placeholder="Escribe tu mensaje..."></textarea>
+                </div>
+                <p style="font-size:.78rem;color:var(--text-gray);">
+                    <i class="fas fa-info-circle"></i> Se abrir&aacute; WhatsApp con el mensaje listo para enviar.
+                </p>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('customWaModal')">Cancelar</button>
+                <button class="btn btn-whatsapp" onclick="sendCustomWa()">
+                    <i class="fab fa-whatsapp"></i> Abrir WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script type="module" src="js/dashboard.js"></script>
+
+<!-- ========== MOBILE BOTTOM NAV ========== -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+    <nav>
+        <button class="mobile-nav-item active" id="mbnDashboard" onclick="mobileNav('dashboard')">
+            <i class="fas fa-home"></i>
+            <span>Inicio</span>
+        </button>
+        <button class="mobile-nav-item" id="mbnStudents" onclick="mobileNav('students')">
+            <i class="fas fa-users"></i>
+            <span>Alumnos</span>
+        </button>
+        <button class="mobile-nav-item" id="mbnFinances" onclick="mobileNav('finances')">
+            <i class="fas fa-wallet"></i>
+            <span>Finanzas</span>
+        </button>
+        <button class="mobile-nav-item" id="mbnMessages" onclick="mobileNav('messages')">
+            <i class="fab fa-whatsapp"></i>
+            <span>Mensajes</span>
+        </button>
+        <button class="mobile-nav-item" id="mbnMore" onclick="openMobileMore()">
+            <i class="fas fa-grip-horizontal"></i>
+            <span>Más</span>
+        </button>
+    </nav>
+</nav>
+
+<!-- ========== MOBILE MORE DRAWER ========== -->
+<div class="mobile-more-overlay" id="mobileMoreOverlay" onclick="closeMobileMore()"></div>
+<div class="mobile-more-drawer" id="mobileMoreDrawer">
+    <div class="mobile-more-drawer-handle"></div>
+    <div class="mobile-more-grid">
+        <button class="mobile-more-item" onclick="mobileNav('classes');closeMobileMore()">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Clases</span>
+        </button>
+        <button class="mobile-more-item" onclick="mobileNav('payments');closeMobileMore()">
+            <i class="fas fa-credit-card"></i>
+            <span>Pagos</span>
+        </button>
+        <button class="mobile-more-item" onclick="mobileNav('reports');closeMobileMore()">
+            <i class="fas fa-chart-line"></i>
+            <span>Reportes</span>
+        </button>
+        <button class="mobile-more-item" onclick="mobileNav('schedule');closeMobileMore()">
+            <i class="fas fa-clock"></i>
+            <span>Horarios</span>
+        </button>
+        <button class="mobile-more-item" onclick="mobileNav('progress');closeMobileMore()">
+            <i class="fas fa-chart-bar"></i>
+            <span>Progreso</span>
+        </button>
+        <button class="mobile-more-item" onclick="mobileNav('notifications');closeMobileMore()">
+            <i class="fas fa-bell"></i>
+            <span>Avisos</span>
+        </button>
+        <button class="mobile-more-item" onclick="mobileNav('settings');closeMobileMore()">
+            <i class="fas fa-cog"></i>
+            <span>Config</span>
+        </button>
+        <button class="mobile-more-item" onclick="logoutAdmin();closeMobileMore()" style="color:var(--danger)">
+            <i class="fas fa-sign-out-alt" style="color:var(--danger)"></i>
+            <span>Salir</span>
+        </button>
+    </div>
+</div>
+
+<script>
+// ── Mobile navigation helpers ──────────────────────────────────
+function mobileNav(panel) {
+    if (typeof showAdminPanel === 'function') showAdminPanel(panel);
+    // Update active bottom nav button
+    const map = {
+        dashboard: 'mbnDashboard',
+        students:  'mbnStudents',
+        finances:  'mbnFinances',
+        messages:  'mbnMessages',
+    };
+    document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+    const btnId = map[panel];
+    if (btnId) document.getElementById(btnId)?.classList.add('active');
+    else document.getElementById('mbnMore')?.classList.add('active');
+}
+
+function openMobileMore() {
+    document.getElementById('mobileMoreDrawer').classList.add('open');
+    document.getElementById('mobileMoreOverlay').style.display = 'block';
+}
+
+function closeMobileMore() {
+    document.getElementById('mobileMoreDrawer').classList.remove('open');
+    document.getElementById('mobileMoreOverlay').style.display = 'none';
+}
+
+// Keep bottom nav in sync when sidebar nav is used
+const _origShowPanel = window.showAdminPanel;
+if (typeof window.showAdminPanel === 'function') {
+    window.showAdminPanel = function(panel) {
+        _origShowPanel(panel);
+        mobileNav(panel);
+    };
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+// Add to Home Screen prompt (Android)
+let _deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _deferredPrompt = e;
+});
+</script>
+
+</body>
+</html>
+

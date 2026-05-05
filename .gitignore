@@ -1,0 +1,26 @@
+# Python scripts (temporary fix scripts)
+*.py
+!setup.py
+
+# Secrets / env
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Firebase local
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Node (if added later)
+node_modules/

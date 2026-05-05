@@ -1,0 +1,43 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper: only authenticated users ──────────────────────
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── Registration secret code (public READ so login page can
+    //    verify it before creating the user account) ──────────
+    match /settings/registration {
+      allow read:  if true;         // needed before auth exists
+      allow write: if isAuth();     // only admins can change the code
+    }
+
+    // ── General settings ──────────────────────────────────────
+    match /settings/{docId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── Students ──────────────────────────────────────────────
+    match /students/{studentId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── Payments ──────────────────────────────────────────────
+    match /payments/{paymentId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── Finances ──────────────────────────────────────────────
+    match /finances/{entryId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── Block everything else ─────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
