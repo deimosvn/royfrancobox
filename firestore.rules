@@ -35,6 +35,11 @@ service cloud.firestore {
       allow read, write: if isAuth();
     }
 
+    // ── Classes ───────────────────────────────────────────────
+    match /classes/{classId} {
+      allow read, write: if isAuth();
+    }
+
     // ── Block everything else ─────────────────────────────────
     match /{document=**} {
       allow read, write: if false;

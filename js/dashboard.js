@@ -24,6 +24,9 @@ import {
     saveRegistrationCode,
     getRegistrationCode,
     onClassesChange,
+    addClassDoc,
+    updateClassDoc,
+    deleteClassDoc,
     formatDate,
     formatMXN,
 } from './firebase.js';
@@ -385,58 +388,89 @@ function getClassEnrolled(cls, students) {
 }
 
 function buildClassCard(cls, students) {
-    const enrolled = getClassEnrolled(cls, students);
-    const cap      = cls.capacity || 20;
-    const pct      = Math.min(100, Math.round(enrolled.length / cap * 100));
-    const clr      = pct >= 90 ? 'warning' : '';
-    const h        = parseInt(((cls.schedule || '12').match(/\d+/) || ['12'])[0]);
-    const gradBg   = h < 12
-        ? 'linear-gradient(135deg, #F59E0B, #D97706)'
-        : 'linear-gradient(135deg, #3B82F6, #2563EB)';
-    const levelMap = { todos: 'Todos los niveles', principiante: 'Principiante', intermedio: 'Intermedio', avanzado: 'Avanzado' };
+    const enrolled  = getClassEnrolled(cls, students);
+    const cap       = cls.capacity || 20;
+    const pct       = Math.min(100, Math.round(enrolled.length / cap * 100));
+    const h         = parseInt(((cls.schedule || '12').match(/\d+/) || ['12'])[0]);
+    const isMorning = h >= 5 && h < 12;
+
+    const barColor = pct >= 90 ? 'var(--danger)' : pct >= 70 ? 'var(--warning)' : 'var(--success)';
+    const pctBadgeClass = pct >= 90 ? 'badge-danger' : pct >= 70 ? 'badge-warning' : 'badge-success';
+
+    const levelMap   = { todos: 'Todos los niveles', principiante: 'Principiante', intermedio: 'Intermedio', avanzado: 'Avanzado' };
     const levelLabel = levelMap[cls.level] || cls.level || 'Todos los niveles';
+    const levelIcon  = { todos: 'fa-users', principiante: 'fa-seedling', intermedio: 'fa-dumbbell', avanzado: 'fa-fire' }[cls.level] || 'fa-users';
 
-    const studentItems = enrolled.slice(0, 3).map(s => {
-        const initials = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-        return `
-        <div class="class-student-item">
-            <div class="student-avatar">${initials}</div>
-            <div class="class-student-info">
-                <h5>${esc(s.name)}</h5>
-                <span>${PLAN_LABELS[s.plan] || s.plan}</span>
-            </div>
-            <i class="fas fa-check-circle" style="color:var(--success);"></i>
-        </div>`;
+    // Avatar stack (top 4 enrolled)
+    const avatarStack = enrolled.slice(0, 4).map(s => {
+        const init = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        return `<div class="cls-avatar-chip">${init}</div>`;
     }).join('');
+    const avatarExtra = enrolled.length > 4
+        ? `<div class="cls-avatar-chip cls-avatar-extra">+${enrolled.length - 4}</div>`
+        : '';
 
-    const extra = enrolled.length > 3
-        ? `<p style="text-align:center;color:var(--text-gray);font-size:.8rem;margin-top:.4rem;">+${enrolled.length - 3} más</p>`
-        : '';
-    const emptyMsg = enrolled.length === 0
-        ? `<p style="text-align:center;color:var(--text-gray);font-size:.82rem;padding:.5rem 0;">Sin alumnos inscritos</p>`
-        : '';
+    const timeLabel = isMorning ? 'Mañana' : 'Tarde/Noche';
+    const timeBadge = isMorning
+        ? `<span class="cls-time-badge cls-time-morning"><i class="fas fa-sun"></i> ${timeLabel}</span>`
+        : `<span class="cls-time-badge cls-time-night"><i class="fas fa-moon"></i> ${timeLabel}</span>`;
 
     return `
-    <div class="class-card">
-        <div class="class-card-header" style="background:${gradBg};">
-            <h4>${esc(cls.name)}</h4>
-            <div class="class-time"><i class="fas fa-clock"></i> ${esc(cls.schedule)}${cls.days ? ' &middot; ' + esc(cls.days) : ''}</div>
-        </div>
-        <div class="class-card-body">
-            <div class="class-capacity">
-                <span>${enrolled.length}/${cap}</span>
-                <div class="capacity-bar"><div class="capacity-fill ${clr}" style="width:${pct}%;"></div></div>
-                <span>${pct}%</span>
+    <div class="cls-card" data-level="${cls.level || 'todos'}" data-hour="${h}" data-name="${esc(cls.name).toLowerCase()}">
+        <div class="cls-card-accent" style="background:${isMorning ? 'linear-gradient(135deg,#F59E0B,#D97706)' : 'linear-gradient(135deg,#6366F1,#4F46E5)'};"></div>
+        <div class="cls-card-body">
+            <!-- Header row -->
+            <div class="cls-header">
+                <div class="cls-icon ${isMorning ? 'cls-icon-morning' : 'cls-icon-night'}">
+                    <i class="fas ${isMorning ? 'fa-sun' : 'fa-moon'}"></i>
+                </div>
+                <div class="cls-title-block">
+                    <h3 class="cls-name">${esc(cls.name)}</h3>
+                    <div class="cls-meta">
+                        <span><i class="fas fa-clock"></i> ${esc(cls.schedule)}</span>
+                        ${cls.days ? `<span><i class="fas fa-calendar-week"></i> ${esc(cls.days)}</span>` : ''}
+                    </div>
+                </div>
+                ${timeBadge}
             </div>
-            <p style="color:var(--text-gray);font-size:.82rem;margin:.6rem 0 .4rem;">
-                <i class="fas fa-user-tie"></i> ${esc(cls.instructor || 'Roy Franco')}
-                &nbsp;&middot;&nbsp;
-                <i class="fas fa-layer-group"></i> ${levelLabel}
-            </p>
-            <div class="class-students-list" style="margin:.4rem 0;">${studentItems}${extra}${emptyMsg}</div>
-            <button class="btn btn-primary btn-sm" style="width:100%;margin-top:.5rem;" onclick="manageClass('${cls.id}')">
-                <i class="fas fa-cog"></i> Administrar Clase
-            </button>
+
+            <!-- Info chips -->
+            <div class="cls-chips">
+                <span class="cls-chip"><i class="fas fa-user-tie"></i> ${esc(cls.instructor || 'Roy Franco')}</span>
+                <span class="cls-chip"><i class="fas ${levelIcon}"></i> ${levelLabel}</span>
+            </div>
+
+            <!-- Capacity bar -->
+            <div class="cls-capacity-block">
+                <div class="cls-capacity-labels">
+                    <span style="font-weight:700;color:var(--text-dark);">${enrolled.length} / ${cap} alumnos</span>
+                    <span class="badge ${pctBadgeClass}" style="font-size:.7rem;">${pct}%</span>
+                </div>
+                <div class="cls-cap-track">
+                    <div class="cls-cap-fill" style="width:${pct}%;background:${barColor};"></div>
+                </div>
+            </div>
+
+            <!-- Avatar stack -->
+            <div class="cls-avatar-row">
+                <div class="cls-avatar-stack">${avatarStack}${avatarExtra}</div>
+                ${enrolled.length === 0
+                    ? `<span style="color:var(--text-gray);font-size:.8rem;">Sin alumnos inscritos</span>`
+                    : `<span style="color:var(--text-gray);font-size:.8rem;">${enrolled.length === 1 ? '1 alumno inscrito' : enrolled.length + ' alumnos inscritos'}</span>`
+                }
+            </div>
+
+            ${cls.description ? `<p class="cls-desc">${esc(cls.description)}</p>` : ''}
+
+            <!-- Actions -->
+            <div class="cls-actions">
+                <button class="btn btn-primary btn-sm cls-btn-manage" onclick="manageClass('${cls.id}')">
+                    <i class="fas fa-users"></i> Ver Alumnos
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="deleteClass('${cls.id}','${esc(cls.name)}')" title="Eliminar clase">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
         </div>
     </div>`;
 }
@@ -445,35 +479,80 @@ function renderAllClasses(classes, students) {
     const grid = document.getElementById('allClassesGrid');
     if (!grid) return;
 
-    if (classes.length === 0) {
-        grid.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">
-            No hay clases registradas aún. Usa <b>Nueva Clase</b> para agregar.
-        </p>`;
-        // Zero out stats
-        const els = { statClassesMorning: '0', statClassesAfternoon: '0', statClassesAvgPct: '0%' };
-        Object.entries(els).forEach(([id, v]) => { const el = document.getElementById(id); if (el) el.textContent = v; });
-        return;
-    }
-
-    // Stats
-    const getHour = cls => parseInt(((cls.schedule || '12').match(/\d+/) || ['12'])[0]);
+    // Update stats
+    const getHour   = c => parseInt(((c.schedule || '12').match(/\d+/) || ['12'])[0]);
     const morning   = classes.filter(c => { const h = getHour(c); return h >= 5 && h < 12; });
     const afternoon = classes.filter(c => { const h = getHour(c); return h >= 12; });
     let totalE = 0, totalC = 0;
-    classes.forEach(cls => {
-        totalE += getClassEnrolled(cls, students).length;
-        totalC += cls.capacity || 20;
-    });
+    classes.forEach(c => { totalE += getClassEnrolled(c, students).length; totalC += c.capacity || 20; });
     const avgPct = totalC > 0 ? Math.round(totalE / totalC * 100) : 0;
-    const statM = document.getElementById('statClassesMorning');
-    const statA = document.getElementById('statClassesAfternoon');
-    const statP = document.getElementById('statClassesAvgPct');
-    if (statM) statM.textContent = morning.length;
-    if (statA) statA.textContent = afternoon.length;
-    if (statP) statP.textContent = avgPct + '%';
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('statTotalClasses',    classes.length);
+    set('statClassesMorning',  morning.length);
+    set('statClassesAfternoon', afternoon.length);
+    set('statClassesAvgPct',   avgPct + '%');
+
+    if (classes.length === 0) {
+        grid.innerHTML = `
+        <div class="classes-empty-state">
+            <i class="fas fa-calendar-times" style="font-size:3rem;color:var(--text-gray);margin-bottom:1rem;"></i>
+            <h3 style="color:var(--text-dark);margin-bottom:.5rem;">No hay clases registradas</h3>
+            <p style="color:var(--text-gray);margin-bottom:1.5rem;">Crea tu primera clase con el botón <b>Nueva Clase</b></p>
+            <button class="btn btn-primary" onclick="openAddClassModal()"><i class="fas fa-plus"></i> Nueva Clase</button>
+        </div>`;
+        return;
+    }
 
     grid.innerHTML = classes.map(cls => buildClassCard(cls, students)).join('');
+    // Re-apply any active filters
+    applyClassFilters();
 }
+
+// Filter classes in the grid
+function applyClassFilters() {
+    const q     = (document.getElementById('classSearchInput')?.value || '').toLowerCase();
+    const level = document.getElementById('classLevelFilter')?.value || '';
+    const time  = document.getElementById('classTimeFilter')?.value || '';
+    const cards = document.querySelectorAll('.cls-card');
+    let visible = 0;
+    cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const lv   = card.dataset.level || '';
+        const hour = parseInt(card.dataset.hour || '12');
+        const matchQ   = !q     || name.includes(q) || (card.querySelector('.cls-chips')?.textContent.toLowerCase().includes(q));
+        const matchLvl = !level || lv === level;
+        const matchT   = !time
+            || (time === 'morning'   && hour >= 5 && hour < 12)
+            || (time === 'afternoon' && hour >= 12);
+        card.style.display = (matchQ && matchLvl && matchT) ? '' : 'none';
+        if (matchQ && matchLvl && matchT) visible++;
+    });
+    // Show no-results message
+    const grid = document.getElementById('allClassesGrid');
+    const noRes = grid?.querySelector('.cls-no-results');
+    if (visible === 0 && cards.length > 0) {
+        if (!noRes) {
+            const d = document.createElement('div');
+            d.className = 'cls-no-results';
+            d.innerHTML = '<i class="fas fa-search"></i><p>No se encontraron clases con ese filtro</p>';
+            grid.appendChild(d);
+        }
+    } else {
+        noRes?.remove();
+    }
+}
+
+window.filterClasses = applyClassFilters;
+
+window.deleteClass = async function (id, name) {
+    if (!confirm(`¿Eliminar la clase "${name}"? Esta acción no se puede deshacer.`)) return;
+    try {
+        await deleteClassDoc(id);
+        showNotification(`Clase "${name}" eliminada`, 'success');
+    } catch (err) {
+        showNotification('Error al eliminar: ' + err.message, 'error');
+    }
+};
 
 window.manageClass = function (classId) {
     const cls = _allClasses.find(c => c.id === classId);
@@ -1622,21 +1701,16 @@ window.saveNewClass = async function (e) {
     const btn = e.submitter || e.target.querySelector('[type=submit]');
     if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
 
-    const name       = document.getElementById('className')?.value.trim();
-    const instructor = document.getElementById('classInstructor')?.value.trim() || 'Roy Franco';
-    const schedule   = document.getElementById('classSchedule')?.value.trim();
-    const days       = document.getElementById('classDays')?.value.trim();
-    const capacity   = parseInt(document.getElementById('classCapacity')?.value || '20');
-    const level      = document.getElementById('classLevel')?.value || 'todos';
+    const name        = document.getElementById('className')?.value.trim();
+    const instructor  = document.getElementById('classInstructor')?.value.trim() || 'Roy Franco';
+    const schedule    = document.getElementById('classSchedule')?.value.trim();
+    const days        = document.getElementById('classDays')?.value.trim();
+    const capacity    = parseInt(document.getElementById('classCapacity')?.value || '20');
+    const level       = document.getElementById('classLevel')?.value || 'todos';
     const description = document.getElementById('classDescription')?.value.trim();
 
     try {
-        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        await addDoc(collection(db, 'classes'), {
-            name, instructor, schedule, days, capacity,
-            enrolled: 0, level, description,
-            createdAt: serverTimestamp(),
-        });
+        await addClassDoc({ name, instructor, schedule, days, capacity, enrolled: 0, level, description });
         showNotification(`Clase "${name}" registrada correctamente`, 'success');
         closeAdminModal('addClassModal');
     } catch (err) {

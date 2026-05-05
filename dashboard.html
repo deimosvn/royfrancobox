@@ -707,29 +707,43 @@
 
                 <!-- Classes Panel -->
                 <div class="admin-panel" id="panel-classes">
-                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+
+                    <!-- Page header -->
+                    <div class="page-header">
+                        <div>
+                            <h2><i class="fas fa-calendar-alt" style="color:var(--primary);margin-right:.5rem;"></i>Clases</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.2rem;">Administra todas las clases del gimnasio</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddClassModal()">
+                            <i class="fas fa-plus"></i> Nueva Clase
+                        </button>
+                    </div>
+
+                    <!-- Stats -->
+                    <div class="admin-stats-grid" style="margin-bottom:1.5rem;">
                         <div class="admin-stat-card">
-                            <div class="admin-stat-icon red">
-                                <i class="fas fa-sun"></i>
+                            <div class="admin-stat-icon red"><i class="fas fa-layer-group"></i></div>
+                            <div class="admin-stat-info">
+                                <h3 id="statTotalClasses">—</h3>
+                                <p>Total de Clases</p>
                             </div>
+                        </div>
+                        <div class="admin-stat-card">
+                            <div class="admin-stat-icon yellow"><i class="fas fa-sun"></i></div>
                             <div class="admin-stat-info">
                                 <h3 id="statClassesMorning">—</h3>
                                 <p>Clases Ma&ntilde;ana</p>
                             </div>
                         </div>
                         <div class="admin-stat-card">
-                            <div class="admin-stat-icon blue">
-                                <i class="fas fa-moon"></i>
-                            </div>
+                            <div class="admin-stat-icon blue"><i class="fas fa-moon"></i></div>
                             <div class="admin-stat-info">
                                 <h3 id="statClassesAfternoon">—</h3>
-                                <p>Clases Tarde</p>
+                                <p>Clases Tarde / Noche</p>
                             </div>
                         </div>
                         <div class="admin-stat-card">
-                            <div class="admin-stat-icon green">
-                                <i class="fas fa-user-check"></i>
-                            </div>
+                            <div class="admin-stat-icon green"><i class="fas fa-user-check"></i></div>
                             <div class="admin-stat-info">
                                 <h3 id="statClassesAvgPct">—</h3>
                                 <p>Ocupaci&oacute;n Promedio</p>
@@ -737,16 +751,34 @@
                         </div>
                     </div>
 
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-list"></i> Todas las Clases</h3>
-                        </div>
-                        <div class="admin-card-body">
-                            <div class="class-schedule-grid" id="allClassesGrid">
-                                <p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">
-                                    <i class="fas fa-spinner fa-spin"></i> Cargando clases...
-                                </p>
+                    <!-- Filter bar -->
+                    <div class="admin-card" style="margin-bottom:1.25rem;">
+                        <div class="admin-card-body" style="padding:.85rem 1.25rem;">
+                            <div class="classes-filter-bar">
+                                <div class="admin-search" style="flex:1;max-width:320px;">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="classSearchInput" placeholder="Buscar clase, instructor..." oninput="filterClasses()" style="width:100%;background:#fff;border:1.5px solid var(--border);">
+                                </div>
+                                <select id="classLevelFilter" onchange="filterClasses()" style="padding:.55rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-full);font-family:inherit;font-size:.875rem;background:#fff;color:var(--text-dark);cursor:pointer;outline:none;">
+                                    <option value="">Todos los niveles</option>
+                                    <option value="principiante">Principiante</option>
+                                    <option value="intermedio">Intermedio</option>
+                                    <option value="avanzado">Avanzado</option>
+                                </select>
+                                <select id="classTimeFilter" onchange="filterClasses()" style="padding:.55rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-full);font-family:inherit;font-size:.875rem;background:#fff;color:var(--text-dark);cursor:pointer;outline:none;">
+                                    <option value="">Cualquier horario</option>
+                                    <option value="morning">Ma&ntilde;ana (5am–12pm)</option>
+                                    <option value="afternoon">Tarde/Noche (12pm+)</option>
+                                </select>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Classes grid -->
+                    <div class="classes-grid-pro" id="allClassesGrid">
+                        <div class="classes-empty-state">
+                            <i class="fas fa-spinner fa-spin" style="font-size:2rem;color:var(--primary);"></i>
+                            <p>Cargando clases...</p>
                         </div>
                     </div>
                 </div>

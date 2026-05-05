@@ -272,6 +272,31 @@ export function onClassesChange(callback) {
     );
 }
 
+/**
+ * Add a new class to Firestore.
+ */
+export async function addClassDoc(data) {
+    return addDoc(collection(db, CLASSES), {
+        ...data,
+        createdAt: serverTimestamp(),
+    });
+}
+
+/**
+ * Update a class document.
+ */
+export async function updateClassDoc(id, data) {
+    return updateDoc(doc(db, CLASSES, id), data);
+}
+
+/**
+ * Delete a class document.
+ */
+export async function deleteClassDoc(id) {
+    const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    return deleteDoc(doc(db, CLASSES, id));
+}
+
 // ── Settings ───────────────────────────────────────────────────
 
 const SETTINGS = 'settings';
