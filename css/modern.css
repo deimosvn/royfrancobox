@@ -2281,3 +2281,203 @@ body {
 .admin-modal textarea {
     font-size: max(16px, 0.875rem) !important;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD v2 — professional redesign
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Header ──────────────────────────────────────────────────── */
+.dash-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+.dash-hdr-text .dash-greeting {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1.2;
+}
+.dash-hdr-text .dash-date {
+    font-size: .82rem;
+    color: var(--text-gray);
+    margin: .2rem 0 0;
+    text-transform: capitalize;
+}
+.dash-hdr-btn { white-space: nowrap; }
+
+@media (max-width: 480px) {
+    .dash-hdr-text .dash-greeting { font-size: 1.1rem; }
+    .dash-hdr-btn-label { display: none; }
+}
+
+/* ── KPI Stats ───────────────────────────────────────────────── */
+.dash-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 768px) {
+    .dash-kpis { grid-template-columns: repeat(2, 1fr); gap: .75rem; }
+}
+.dash-kpi {
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    background: var(--card-bg);
+    border-radius: 14px;
+    padding: 1.1rem 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: transform .15s, box-shadow .15s;
+}
+.dash-kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.dash-kpi-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.dash-kpi--red  .dash-kpi-icon { background: #EF44441a; color: #EF4444; }
+.dash-kpi--green .dash-kpi-icon { background: #10B9811a; color: #10B981; }
+.dash-kpi--amber .dash-kpi-icon { background: #F59E0B1a; color: #F59E0B; }
+.dash-kpi--blue  .dash-kpi-icon { background: #3B82F61a; color: #3B82F6; }
+.dash-kpi-body { display: flex; flex-direction: column; min-width: 0; }
+.dash-kpi-val {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1;
+    letter-spacing: -.02em;
+}
+.dash-kpi-val--sm { font-size: 1.1rem; }
+.dash-kpi-lbl {
+    font-size: .75rem;
+    color: var(--text-gray);
+    margin-top: .25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+@media (max-width: 480px) {
+    .dash-kpi { padding: .85rem 1rem; gap: .7rem; border-radius: 12px; }
+    .dash-kpi-icon { width: 38px; height: 38px; font-size: 1rem; }
+    .dash-kpi-val { font-size: 1.35rem; }
+}
+
+/* ── Quick Actions row ───────────────────────────────────────── */
+.dash-qa-row {
+    display: flex;
+    gap: .75rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.dash-qa-row::-webkit-scrollbar { display: none; }
+.dash-qa {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .35rem;
+    padding: .85rem 1.1rem;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color .15s, background .15s, transform .15s;
+    color: var(--text-dark);
+    font-size: .78rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+}
+.dash-qa i { font-size: 1.2rem; color: var(--primary); }
+.dash-qa--wa i { color: #25D366; }
+.dash-qa:hover {
+    border-color: var(--primary);
+    background: #E6393610;
+    transform: translateY(-2px);
+}
+@media (max-width: 480px) {
+    .dash-qa { padding: .7rem .9rem; border-radius: 12px; }
+    .dash-qa i { font-size: 1.1rem; }
+}
+
+/* ── Main 2-col grid ─────────────────────────────────────────── */
+.dash-main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+@media (max-width: 900px) {
+    .dash-main-grid { grid-template-columns: 1fr; }
+}
+.dash-col { display: flex; flex-direction: column; gap: 0; }
+
+/* ── Pending alerts list ─────────────────────────────────────── */
+.alert-item {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background .12s;
+}
+.alert-item:last-child { border-bottom: none; }
+.alert-item:hover { background: var(--surface); }
+.alert-item-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.alert-item--expired .alert-item-avatar { background: #EF4444; }
+.alert-item--today   .alert-item-avatar { background: #F97316; }
+.alert-item--soon    .alert-item-avatar { background: #F59E0B; }
+.alert-item--warn    .alert-item-avatar { background: #3B82F6; }
+.alert-item-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.alert-item-name {
+    font-size: .875rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.alert-item-meta { font-size: .75rem; color: var(--text-gray); margin-top: .1rem; }
+.alert-item-badge {
+    font-size: .72rem;
+    font-weight: 700;
+    padding: .2rem .55rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.alert-item--expired .alert-item-badge { background: #EF44441a; color: #EF4444; }
+.alert-item--today   .alert-item-badge { background: #F973161a; color: #F97316; }
+.alert-item--soon    .alert-item-badge { background: #F59E0B1a; color: #F59E0B; }
+.alert-item--warn    .alert-item-badge { background: #3B82F61a; color: #3B82F6; }
+.alert-item-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+
+@media (max-width: 480px) {
+    .alert-item { padding: .6rem 1rem; gap: .6rem; }
+    .alert-item-actions .btn { padding: .3rem .5rem; }
+}

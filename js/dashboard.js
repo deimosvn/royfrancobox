@@ -217,6 +217,12 @@ function renderDashboardStats(students) {
         return s.attendanceHistory.some(dateStr => new Date(dateStr) >= weekStart);
     }).length;
 
+    // Update dashboard date
+    const dateEl = document.getElementById('dashDate');
+    if (dateEl) {
+        const now = new Date();
+        dateEl.textContent = now.toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    }
     set('statActiveStudents',  active);
     set('statWeeklyClasses',   weeklyClasses);
     set('statNewStudents',     newThisMonth);
@@ -236,23 +242,38 @@ function renderDashboardStats(students) {
 // ══════════════════════════════════════════════════════════════
 
 function renderPendingPaymentsWidget(students) {
-    const tbody = document.getElementById('pending-payments-table');
-    if (!tbody) return;
+    // Legacy: keep for compatibility — calls the new card renderer
+    renderPendingAlertsCards(students);
+}
 
-    // Show students with no classes left OR whose plan expires within 5 days
+function renderPendingAlertsCards(students) {
+    const list = document.getElementById('pending-alerts-list');
+    if (!list) return;
+
     const alerts = students.filter(s => {
         if (s.remainingClasses <= 0) return true;
         const d = daysUntilExpiry(s.expiryDate);
         return d !== null && d <= 5;
+    }).sort((a, b) => {
+        const da = daysUntilExpiry(a.expiryDate) ?? -99;
+        const db = daysUntilExpiry(b.expiryDate) ?? -99;
+        return da - db;
     });
 
+    const pendingCount = document.getElementById('pendingPaymentsCount');
+    if (pendingCount) pendingCount.textContent = alerts.length ? `${alerts.length} alerta${alerts.length > 1 ? 's' : ''}` : '✓ Al día';
+
     if (alerts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--success);padding:1.5rem;"><i class="fas fa-check-circle"></i> Sin pagos urgentes</td></tr>`;
+        list.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:.5rem;padding:2rem;color:var(--success);">
+            <i class="fas fa-check-circle" style="font-size:2rem;"></i>
+            <span style="font-weight:600;font-size:.95rem;">¡Todo al día!</span>
+            <span style="font-size:.82rem;color:var(--text-gray);">Sin pagos urgentes</span>
+        </div>`;
         return;
     }
 
-    tbody.innerHTML = '';
-    alerts.forEach(s => {
+    list.innerHTML = alerts.map(s => {
         const initials  = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const phone     = (s.phone || '').replace(/\D/g, '');
         const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
@@ -260,40 +281,38 @@ function renderPendingPaymentsWidget(students) {
         const days      = daysUntilExpiry(s.expiryDate);
         const planLabel = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
 
-        let expiryBadge;
+        let urgencyClass, urgencyLabel;
         if (s.remainingClasses <= 0 && (days === null || days < 0)) {
-            expiryBadge = '<span class="badge badge-danger">Sin clases</span>';
+            urgencyClass = 'alert-item--expired'; urgencyLabel = 'Vencido';
         } else if (days !== null && days < 0) {
-            expiryBadge = '<span class="badge badge-danger">Vencido</span>';
+            urgencyClass = 'alert-item--expired'; urgencyLabel = 'Vencido';
         } else if (days !== null && days === 0) {
-            expiryBadge = '<span class="badge badge-danger">Hoy vence</span>';
-        } else if (days !== null) {
-            expiryBadge = `<span class="badge badge-warning">En ${days} día(s)</span>`;
+            urgencyClass = 'alert-item--today'; urgencyLabel = 'Vence hoy';
+        } else if (days !== null && days <= 3) {
+            urgencyClass = 'alert-item--soon'; urgencyLabel = `${days}d`;
         } else {
-            expiryBadge = '<span class="badge badge-danger">Sin clases</span>';
+            urgencyClass = 'alert-item--warn'; urgencyLabel = `${days}d`;
         }
 
         const daysForMsg = days !== null ? days : 0;
-        tbody.insertAdjacentHTML('beforeend', `
-        <tr>
-            <td>
-                <div class="student-info-cell">
-                    <div class="avatar">${initials}</div>
-                    <div class="info"><h4>${esc(s.name)}</h4><p>${esc(s.email || '')}</p></div>
-                </div>
-            </td>
-            <td>${esc(s.phone || '—')}</td>
-            <td>${planLabel}</td>
-            <td><strong>$${amount}</strong></td>
-            <td>${expiryBadge}</td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn btn-success btn-sm" onclick="attendStudent('${s.id}')" title="Registrar asistencia / renovar"><i class="fas fa-check"></i></button>
-                    <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','${daysForMsg}')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
-                </div>
-            </td>
-        </tr>`);
-    });
+        return `
+        <div class="alert-item ${urgencyClass}">
+            <div class="alert-item-avatar">${initials}</div>
+            <div class="alert-item-info">
+                <span class="alert-item-name">${esc(s.name)}</span>
+                <span class="alert-item-meta">${planLabel} · $${amount}</span>
+            </div>
+            <div class="alert-item-badge">${urgencyLabel}</div>
+            <div class="alert-item-actions">
+                <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','${daysForMsg}')" title="WhatsApp">
+                    <i class="fab fa-whatsapp"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="openRenewModal('${s.id}')" title="Renovar">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
