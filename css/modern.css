@@ -2153,3 +2153,122 @@ body {
     .classes-filter-bar select { width: 100%; }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD — RESPONSIVE MAIN GRID
+═══════════════════════════════════════════════════════════════ */
+
+/* 2-col layout: main content (2fr) + activity sidebar (1fr) */
+.dash-main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+    .dash-main-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+    .dash-main-grid { grid-template-columns: 1fr; gap: 1rem; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SHARED PANEL FILTER BAR
+═══════════════════════════════════════════════════════════════ */
+
+/* Reusable filter bar for any panel (students, payments, etc.) */
+.panel-filter-bar {
+    display: flex;
+    gap: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-select {
+    padding: .55rem 1rem;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    font-family: inherit;
+    font-size: .875rem;
+    color: var(--text-dark);
+    background: var(--bg);
+    cursor: pointer;
+    outline: none;
+    transition: all var(--duration) var(--ease);
+    min-height: 44px;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: var(--shadow-glow);
+}
+
+@media (max-width: 768px) {
+    .panel-filter-bar { flex-direction: column; align-items: stretch; }
+    .panel-filter-bar .admin-search { max-width: 100% !important; width: 100%; }
+    .panel-filter-bar .admin-search input { width: 100% !important; }
+    .filter-select { width: 100%; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PAGE HEADER — GLOBAL IMPROVEMENTS
+═══════════════════════════════════════════════════════════════ */
+
+/* Make page-header stick properly on mobile */
+.page-header h2 {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 480px) {
+    .page-header { gap: .5rem; }
+    .page-header h2 { font-size: 1.3rem; }
+    .page-header > div:last-child { width: 100%; }
+    .page-header > div:last-child .btn { width: 100%; justify-content: center; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SIDEBAR TEXT IMPROVEMENTS (encoding was fixed, now style)
+═══════════════════════════════════════════════════════════════ */
+
+/* Sidebar section title — ensure proper rendering */
+.sidebar-section-title {
+    user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE: ADMIN CONTENT SAFE SPACING
+═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+    /* Extra padding so bottom nav doesn't overlap content */
+    .admin-content {
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+    }
+    /* Stat cards: more compact on small screens */
+    .admin-stats-grid { grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+    /* All panels: reduce top padding */
+    .admin-panel.active { padding-top: 0; }
+    /* Enrolled list: full width on mobile */
+    #enrolledStudentsList { padding: 0 .75rem .5rem; }
+    /* Pending payments table: horizontal scroll */
+    #pending-payments-table td,
+    #pending-payments-table th { white-space: nowrap; }
+}
+
+@media (max-width: 480px) {
+    /* Stat card numbers — smaller on tiny screens */
+    .admin-stat-info h3 { font-size: 1.4rem; }
+    .admin-stat-info p   { font-size: .72rem; }
+    .admin-stat-icon { width: 36px; height: 36px; font-size: .95rem; }
+    /* Stack action buttons vertically */
+    .action-btns { flex-direction: row; gap: .3rem; }
+    /* More compact card headers */
+    .admin-card-header { padding: .85rem 1rem; gap: .5rem; }
+    .admin-card-body   { padding: .85rem 1rem; }
+}
+

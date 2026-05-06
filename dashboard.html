@@ -48,7 +48,7 @@
             <div class="sidebar-header">
                 <img src="assets/images/logo.jpg" alt="Boxeo Franco" onerror="this.style.display='none'">
                 <h3>BOXEO FRANCO</h3>
-                <p>Panel de Administraci├│n</p>
+                <p>Panel de Administración</p>
             </div>
             <nav class="sidebar-menu">
                 <div class="sidebar-section">
@@ -90,7 +90,7 @@
                 </div>
                 
                 <div class="sidebar-section">
-                    <span class="sidebar-section-title">COMUNICACI├ôN</span>
+                    <span class="sidebar-section-title">COMUNICACIÓN</span>
                     <a class="sidebar-menu-item" onclick="showAdminPanel('messages')">
                         <i class="fab fa-whatsapp"></i>
                         <span>Mensajes</span>
@@ -122,7 +122,7 @@
                     <span class="sidebar-section-title">SISTEMA</span>
                     <a class="sidebar-menu-item" onclick="showAdminPanel('settings')">
                         <i class="fas fa-cog"></i>
-                        <span>Configuraci├│n</span>
+                        <span>Configuración</span>
                     </a>
                     <a class="sidebar-menu-item" onclick="showAdminPanel('backup')">
                         <i class="fas fa-database"></i>
@@ -130,7 +130,7 @@
                     </a>
                     <a class="sidebar-menu-item" onclick="logoutAdmin()" style="color: var(--danger);">
                         <i class="fas fa-sign-out-alt"></i>
-                        <span>Cerrar Sesi├│n</span>
+                        <span>Cerrar Sesión</span>
                     </a>
                 </div>
             </nav>
@@ -169,6 +169,16 @@
             <div class="admin-content">
                 <!-- Dashboard Panel -->
                 <div class="admin-panel active" id="panel-dashboard">
+                    <!-- Page Header -->
+                    <div class="page-header" style="margin-bottom:1.5rem;">
+                        <div>
+                            <h2><i class="fas fa-home" style="color:var(--primary);margin-right:.5rem;"></i>Dashboard</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;" id="dashGreeting">Bienvenido al panel de administración</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAddStudentModal()">
+                            <i class="fas fa-user-plus"></i> Nuevo Alumno
+                        </button>
+                    </div>
                     <!-- Stats -->
                     <div class="admin-stats-grid">
                         <div class="admin-stat-card">
@@ -213,7 +223,7 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+                    <div class="dash-main-grid">
                         <!-- Today's Classes -->
                         <div class="admin-card">
                             <div class="admin-card-header">
@@ -240,7 +250,7 @@
                                                 <div class="class-student-item">
                                                     <div class="student-avatar">JM</div>
                                                     <div class="class-student-info">
-                                                        <h5>Juan Mart├¡nez</h5>
+                                                        <h5>Juan Martínez</h5>
                                                         <span>Intermedio ÔÇó Mensual</span>
                                                     </div>
                                                     <i class="fas fa-check-circle" style="color: var(--success);"></i>
@@ -248,7 +258,7 @@
                                                 <div class="class-student-item">
                                                     <div class="student-avatar">MG</div>
                                                     <div class="class-student-info">
-                                                        <h5>Mar├¡a Garc├¡a</h5>
+                                                        <h5>María García</h5>
                                                         <span>Principiante ÔÇó Mensual</span>
                                                     </div>
                                                     <i class="fas fa-check-circle" style="color: var(--success);"></i>
@@ -256,7 +266,7 @@
                                                 <div class="class-student-item">
                                                     <div class="student-avatar">CR</div>
                                                     <div class="class-student-info">
-                                                        <h5>Carlos Rodr├¡guez</h5>
+                                                        <h5>Carlos Rodríguez</h5>
                                                         <span>Avanzado ÔÇó Mensual</span>
                                                     </div>
                                                     <i class="fas fa-clock" style="color: var(--accent);"></i>
@@ -284,7 +294,7 @@
                                                 <div class="class-student-item">
                                                     <div class="student-avatar">PL</div>
                                                     <div class="class-student-info">
-                                                        <h5>Pedro L├│pez</h5>
+                                                        <h5>Pedro López</h5>
                                                         <span>Intermedio ÔÇó Semanal</span>
                                                     </div>
                                                     <i class="fas fa-check-circle" style="color: var(--success);"></i>
@@ -292,7 +302,7 @@
                                                 <div class="class-student-item">
                                                     <div class="student-avatar">AS</div>
                                                     <div class="class-student-info">
-                                                        <h5>Ana S├ínchez</h5>
+                                                        <h5>Ana Sánchez</h5>
                                                         <span>Intermedio ÔÇó Mensual</span>
                                                     </div>
                                                     <i class="fas fa-check-circle" style="color: var(--success);"></i>
@@ -300,7 +310,7 @@
                                                 <div class="class-student-item">
                                                     <div class="student-avatar">RH</div>
                                                     <div class="class-student-info">
-                                                        <h5>Roberto Hern├índez</h5>
+                                                        <h5>Roberto Hernández</h5>
                                                         <span>Intermedio ÔÇó Mensual</span>
                                                     </div>
                                                     <i class="fas fa-times-circle" style="color: var(--danger);"></i>
@@ -331,7 +341,7 @@
                                         </div>
                                         <div class="activity-content">
                                             <h4>Nuevo alumno registrado</h4>
-                                            <p>Luis M├®ndez se inscribi├│ - Plan Mensual</p>
+                                            <p>Luis Méndez se inscribió - Plan Mensual</p>
                                             <small style="color: var(--text-gray);">Hace 2 horas</small>
                                         </div>
                                     </div>
@@ -341,7 +351,7 @@
                                         </div>
                                         <div class="activity-content">
                                             <h4>Pago recibido</h4>
-                                            <p>Mar├¡a Garc├¡a - $700 (Mensual)</p>
+                                            <p>María García - $700 (Mensual)</p>
                                             <small style="color: var(--text-gray);">Hace 3 horas</small>
                                         </div>
                                     </div>
@@ -351,7 +361,7 @@
                                         </div>
                                         <div class="activity-content">
                                             <h4>Pago pendiente</h4>
-                                            <p>Carlos Vega - Vence ma├▒ana</p>
+                                            <p>Carlos Vega - Vence mañana</p>
                                             <small style="color: var(--text-gray);">Hace 5 horas</small>
                                         </div>
                                     </div>
@@ -375,12 +385,12 @@
                     <div class="admin-card" style="margin-top:1.5rem;">
                         <div class="admin-card-header">
                             <h3><i class="fas fa-id-card"></i> Alumnos Inscritos</h3>
-                            <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
-                                <input type="text" id="enrolledSearch" placeholder="Buscar alumno..."
-                                    oninput="filterEnrolledList()"
-                                    style="padding:.35rem .75rem;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);width:140px;">
-                                <select id="enrolledFilterPlan" onchange="filterEnrolledList()"
-                                    style="padding:.35rem .75rem;border-radius:8px;border:1px solid var(--border);background:var(--card-bg);color:var(--text);">
+                            <div class="panel-filter-bar">
+                                <div class="admin-search" style="max-width:220px;">
+                                    <i class="fas fa-search"></i>
+                                    <input type="text" id="enrolledSearch" placeholder="Buscar alumno..." oninput="filterEnrolledList()">
+                                </div>
+                                <select id="enrolledFilterPlan" onchange="filterEnrolledList()" class="filter-select">
                                     <option value="">Todos los planes</option>
                                     <option value="diario">Por Clase</option>
                                     <option value="semanal">Semanal</option>
@@ -400,8 +410,8 @@
                         <div class="admin-card-header">
                             <h3><i class="fas fa-exclamation-circle" style="color: var(--accent);"></i> Pagos Pendientes</h3>
                             <div style="display: flex; gap: 0.75rem; align-items: center;">
-                                <button class="btn btn-success btn-sm" onclick="sendAutoReminders()" title="Enviar recordatorios autom├íticos a quienes les faltan 3 d├¡as">
-                                    <i class="fab fa-whatsapp"></i> Enviar Recordatorios (3 d├¡as)
+                                <button class="btn btn-success btn-sm" onclick="sendAutoReminders()" title="Enviar recordatorios automáticos a quienes les faltan 3 días">
+                                    <i class="fab fa-whatsapp"></i> Enviar Recordatorios (3 días)
                                 </button>
                                 <span class="badge badge-warning" id="pendingPaymentsCount">— pendientes</span>
                             </div>
@@ -411,7 +421,7 @@
                                 <thead>
                                     <tr>
                                         <th>Alumno</th>
-                                        <th>Tel├®fono</th>
+                                        <th>Teléfono</th>
                                         <th>Plan</th>
                                         <th>Monto</th>
                                         <th>Vencimiento</th>
@@ -434,7 +444,7 @@
                                         <td>686 348 4588</td>
                                         <td>Mensual</td>
                                         <td><strong>$700</strong></td>
-                                        <td><span class="badge badge-danger">Ma├▒ana</span></td>
+                                        <td><span class="badge badge-danger">Mañana</span></td>
                                         <td>
                                             <div class="action-btns">
                                                 <button class="btn btn-success btn-sm" onclick="markAsPaid('carlos-vega')" title="Marcar como pagado"><i class="fas fa-check"></i></button>
@@ -455,7 +465,7 @@
                                         <td>686 123 4567</td>
                                         <td>Semanal</td>
                                         <td><strong>$300</strong></td>
-                                        <td><span class="badge badge-warning">3 d├¡as</span></td>
+                                        <td><span class="badge badge-warning">3 días</span></td>
                                         <td>
                                             <div class="action-btns">
                                                 <button class="btn btn-success btn-sm" onclick="markAsPaid('laura-morales')" title="Marcar como pagado"><i class="fas fa-check"></i></button>
@@ -463,12 +473,12 @@
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr data-days="3" data-phone="5216869876543" data-name="Miguel ├üngel" data-amount="700" data-plan="Mensual">
+                                    <tr data-days="3" data-phone="5216869876543" data-name="Miguel Ángel" data-amount="700" data-plan="Mensual">
                                         <td>
                                             <div class="student-info-cell">
                                                 <div class="avatar">MA</div>
                                                 <div class="info">
-                                                    <h4>Miguel ├üngel</h4>
+                                                    <h4>Miguel Ángel</h4>
                                                     <p>miguel.angel@email.com</p>
                                                 </div>
                                             </div>
@@ -476,11 +486,11 @@
                                         <td>686 987 6543</td>
                                         <td>Mensual</td>
                                         <td><strong>$700</strong></td>
-                                        <td><span class="badge badge-warning">3 d├¡as</span></td>
+                                        <td><span class="badge badge-warning">3 días</span></td>
                                         <td>
                                             <div class="action-btns">
                                                 <button class="btn btn-success btn-sm" onclick="markAsPaid('miguel-angel')" title="Marcar como pagado"><i class="fas fa-check"></i></button>
-                                                <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('5216869876543', 'Miguel ├üngel', '700', '3')" title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                                                <button class="btn btn-whatsapp btn-sm" onclick="sendWhatsAppReminder('5216869876543', 'Miguel Ángel', '700', '3')" title="Enviar WhatsApp"><i class="fab fa-whatsapp"></i></button>
                                             </div>
                                         </td>
                                     </tr>
@@ -493,33 +503,37 @@
 
                 <!-- Students Panel -->
                 <div class="admin-panel" id="panel-students">
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-users"></i> Gesti├│n de Alumnos</h3>
-                            <div class="quick-actions">
-                                <button class="btn btn-primary quick-action-btn" onclick="openAddStudentModal()">
-                                    <i class="fas fa-user-plus"></i> Nuevo Alumno
-                                </button>
-                                <button class="btn btn-secondary quick-action-btn" onclick="exportStudents()">
-                                    <i class="fas fa-download"></i> Exportar
-                                </button>
-                            </div>
+                    <!-- Page Header -->
+                    <div class="page-header" style="margin-bottom:1.5rem;">
+                        <div>
+                            <h2><i class="fas fa-users" style="color:var(--primary);margin-right:.5rem;"></i>Alumnos</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Gestión completa de alumnos del gimnasio</p>
                         </div>
-                        <div class="admin-card-body">
-                            <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <select id="filterLevel" onchange="filterStudents()" style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                            <button class="btn btn-primary" onclick="openAddStudentModal()">
+                                <i class="fas fa-user-plus"></i> Nuevo Alumno
+                            </button>
+                            <button class="btn btn-secondary" onclick="exportStudents()">
+                                <i class="fas fa-download"></i> Exportar
+                            </button>
+                        </div>
+                    </div>
+                    <div class="admin-card">
+                        <div class="admin-card-body" style="padding-bottom:0;">
+                            <div class="panel-filter-bar" style="margin-bottom:1.25rem;">
+                                <select id="filterLevel" onchange="filterStudents()" class="filter-select">
                                     <option value="">Todos los Niveles</option>
                                     <option value="principiante">Principiante</option>
                                     <option value="intermedio">Intermedio</option>
                                     <option value="avanzado">Avanzado</option>
                                 </select>
-                                <select id="filterPlan" onchange="filterStudents()" style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                                <select id="filterPlan" onchange="filterStudents()" class="filter-select">
                                     <option value="">Todos los Planes</option>
                                     <option value="diario">Por Clase</option>
                                     <option value="semanal">Semanal</option>
                                     <option value="mensual">Mensual</option>
                                 </select>
-                                <select id="filterStatus" onchange="filterStudents()" style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
+                                <select id="filterStatus" onchange="filterStudents()" class="filter-select">
                                     <option value="">Todos los Estados</option>
                                     <option value="activo">Activo</option>
                                     <option value="pendiente">Pago Pendiente</option>
@@ -530,7 +544,7 @@
                                 <thead>
                                     <tr>
                                         <th>Alumno</th>
-                                        <th>Tel├®fono</th>
+                                        <th>Teléfono</th>
                                         <th>Horario</th>
                                         <th>Plan</th>
                                         <th>Clases Restantes</th>
@@ -548,7 +562,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">JM</div>
                                                 <div class="info">
-                                                    <h4>Juan Mart├¡nez</h4>
+                                                    <h4>Juan Martínez</h4>
                                                     <p>Intermedio</p>
                                                 </div>
                                             </div>
@@ -579,7 +593,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">MG</div>
                                                 <div class="info">
-                                                    <h4>Mar├¡a Garc├¡a</h4>
+                                                    <h4>María García</h4>
                                                     <p>Principiante</p>
                                                 </div>
                                             </div>
@@ -610,7 +624,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">CR</div>
                                                 <div class="info">
-                                                    <h4>Carlos Rodr├¡guez</h4>
+                                                    <h4>Carlos Rodríguez</h4>
                                                     <p>Avanzado</p>
                                                 </div>
                                             </div>
@@ -641,7 +655,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">PL</div>
                                                 <div class="info">
-                                                    <h4>Pedro L├│pez</h4>
+                                                    <h4>Pedro López</h4>
                                                     <p>Intermedio</p>
                                                 </div>
                                             </div>
@@ -672,7 +686,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">AS</div>
                                                 <div class="info">
-                                                    <h4>Ana S├ínchez</h4>
+                                                    <h4>Ana Sánchez</h4>
                                                     <p>Intermedio</p>
                                                 </div>
                                             </div>
@@ -785,12 +799,19 @@
 
                 <!-- Schedule Panel -->
                 <div class="admin-panel" id="panel-schedule">
+                    <!-- Page Header -->
+                    <div class="page-header" style="margin-bottom:1.5rem;">
+                        <div>
+                            <h2><i class="fas fa-clock" style="color:var(--primary);margin-right:.5rem;"></i>Horarios</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Horario semanal del gimnasio</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="editSchedule()">
+                            <i class="fas fa-edit"></i> Editar Horarios
+                        </button>
+                    </div>
                     <div class="admin-card">
                         <div class="admin-card-header">
                             <h3><i class="fas fa-calendar-week"></i> Horario Semanal</h3>
-                            <button class="btn btn-primary" onclick="editSchedule()">
-                                <i class="fas fa-edit"></i> Editar Horarios
-                            </button>
                         </div>
                         <div class="admin-card-body">
                             <div class="table-responsive"><table class="admin-table">
@@ -799,7 +820,7 @@
                                         <th>Horario</th>
                                         <th>Lunes</th>
                                         <th>Martes</th>
-                                        <th>Mi├®rcoles</th>
+                                        <th>Miércoles</th>
                                         <th>Jueves</th>
                                         <th>Viernes</th>
                                     </tr>
@@ -869,7 +890,17 @@
 
                 <!-- Payments Panel -->
                 <div class="admin-panel" id="panel-payments">
-                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
+                    <!-- Page Header -->
+                    <div class="page-header" style="margin-bottom:1.5rem;">
+                        <div>
+                            <h2><i class="fas fa-credit-card" style="color:var(--primary);margin-right:.5rem;"></i>Pagos</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Control de pagos y suscripciones</p>
+                        </div>
+                        <button class="btn btn-primary" onclick="openAdminModal('addPaymentModal')">
+                            <i class="fas fa-plus"></i> Registrar Pago
+                        </button>
+                    </div>
+                    <div class="admin-stats-grid" style="margin-bottom: 1.5rem;">
                         <div class="admin-stat-card">
                             <div class="admin-stat-icon green">
                                 <i class="fas fa-dollar-sign"></i>
@@ -914,7 +945,7 @@
                                         <th>Plan</th>
                                         <th>Monto</th>
                                         <th>Fecha</th>
-                                        <th>M├®todo</th>
+                                        <th>Método</th>
                                         <th>Estado</th>
                                     </tr>
                                 </thead>
@@ -928,7 +959,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">MG</div>
                                                 <div class="info">
-                                                    <h4>Mar├¡a Garc├¡a</h4>
+                                                    <h4>María García</h4>
                                                 </div>
                                             </div>
                                         </td>
@@ -943,7 +974,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">JM</div>
                                                 <div class="info">
-                                                    <h4>Juan Mart├¡nez</h4>
+                                                    <h4>Juan Martínez</h4>
                                                 </div>
                                             </div>
                                         </td>
@@ -958,7 +989,7 @@
                                             <div class="student-info-cell">
                                                 <div class="avatar">PL</div>
                                                 <div class="info">
-                                                    <h4>Pedro L├│pez</h4>
+                                                    <h4>Pedro López</h4>
                                                 </div>
                                             </div>
                                         </td>
@@ -992,15 +1023,22 @@
 
                 <!-- Reports Panel -->
                 <div class="admin-panel" id="panel-reports">
+                    <!-- Page Header -->
+                    <div class="page-header" style="margin-bottom:1.5rem;">
+                        <div>
+                            <h2><i class="fas fa-chart-line" style="color:var(--primary);margin-right:.5rem;"></i>Reportes</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Estadísticas y análisis del gimnasio</p>
+                        </div>
+                    </div>
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-chart-bar"></i> Reportes y Estad├¡sticas</h3>
+                            <h3><i class="fas fa-chart-bar"></i> Reportes y Estadísticas</h3>
                             <div class="quick-actions">
                                 <select style="padding: 0.75rem 1rem; border: 2px solid var(--border); border-radius: 10px;">
                                     <option>Este Mes</option>
-                                    <option>├Ültimo Mes</option>
-                                    <option>├Ültimos 3 Meses</option>
-                                    <option>Este A├▒o</option>
+                                    <option>Último Mes</option>
+                                    <option>Últimos 3 Meses</option>
+                                    <option>Este Año</option>
                                 </select>
                                 <button class="btn btn-secondary quick-action-btn" onclick="downloadReport()">
                                     <i class="fas fa-download"></i> Descargar PDF
@@ -1010,7 +1048,7 @@
                         <div class="admin-card-body">
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
                                 <div>
-                                    <h4 style="margin-bottom: 1rem; color: var(--secondary);"><i class="fas fa-chart-pie"></i> Distribuci├│n por Plan</h4>
+                                    <h4 style="margin-bottom: 1rem; color: var(--secondary);"><i class="fas fa-chart-pie"></i> Distribución por Plan</h4>
                                     <div class="chart-container">
                                         <div style="text-align: center;">
                                             <div style="margin-bottom: 1rem;">
@@ -1076,9 +1114,16 @@
 
                 <!-- Settings Panel -->
                 <div class="admin-panel" id="panel-settings">
+                    <!-- Page Header -->
+                    <div class="page-header" style="margin-bottom:1.5rem;">
+                        <div>
+                            <h2><i class="fas fa-cog" style="color:var(--primary);margin-right:.5rem;"></i>Configuración</h2>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Ajustes del sistema y del gimnasio</p>
+                        </div>
+                    </div>
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-cog"></i> Configuraci├│n del Sistema</h3>
+                            <h3><i class="fas fa-cog"></i> Configuración del Sistema</h3>
                         </div>
                         <div class="admin-card-body">
                             <div class="admin-form-grid">
@@ -1087,7 +1132,7 @@
                                     <input type="text" value="Roy Franco Box">
                                 </div>
                                 <div class="admin-form-group">
-                                    <label>Tel├®fono de Contacto</label>
+                                    <label>Teléfono de Contacto</label>
                                     <input type="tel" value="686 348 4588">
                                 </div>
                                 <div class="admin-form-group">
@@ -1095,11 +1140,11 @@
                                     <input type="email" value="royfabianf@gmail.com">
                                 </div>
                                 <div class="admin-form-group">
-                                    <label>Direcci├│n</label>
-                                    <input type="text" value="Av. Quer├®taro #2201, Mexicali">
+                                    <label>Dirección</label>
+                                    <input type="text" value="Av. Querétaro #2201, Mexicali">
                                 </div>
                                 <div class="admin-form-group">
-                                    <label>Capacidad M├íxima por Clase</label>
+                                    <label>Capacidad Máxima por Clase</label>
                                     <input type="number" value="20">
                                 </div>
                                 <div class="admin-form-group">
@@ -1123,7 +1168,7 @@
 
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-user-shield"></i> Configuraci├│n de Admin</h3>
+                            <h3><i class="fas fa-user-shield"></i> Configuración de Admin</h3>
                         </div>
                         <div class="admin-card-body">
                             <div class="admin-form-grid">
@@ -1132,7 +1177,7 @@
                                     <input type="email" value="admin@royfrancobox.com">
                                 </div>
                                 <div class="admin-form-group">
-                                    <label>Nueva Contrase├▒a</label>
+                                    <label>Nueva Contraseña</label>
                                     <input type="password" placeholder="ÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇóÔÇó">
                                 </div>
                             </div>
@@ -1332,7 +1377,7 @@
                         </div>
                         <div class="admin-card-body">
                             <div class="message-templates">
-                                <h4 style="margin-bottom: 1rem; color: var(--text-gray);">Plantillas R├ípidas</h4>
+                                <h4 style="margin-bottom: 1rem; color: var(--text-gray);">Plantillas Rápidas</h4>
                                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
                                     <button class="template-btn" onclick="useTemplate('recordatorio')">
                                         <i class="fas fa-bell"></i>
@@ -1340,15 +1385,15 @@
                                     </button>
                                     <button class="template-btn" onclick="useTemplate('cancelacion')">
                                         <i class="fas fa-times-circle"></i>
-                                        <span>Cancelaci├│n de Clase</span>
+                                        <span>Cancelación de Clase</span>
                                     </button>
                                     <button class="template-btn" onclick="useTemplate('promocion')">
                                         <i class="fas fa-tag"></i>
-                                        <span>Promoci├│n Especial</span>
+                                        <span>Promoción Especial</span>
                                     </button>
                                     <button class="template-btn" onclick="useTemplate('evento')">
                                         <i class="fas fa-trophy"></i>
-                                        <span>Invitaci├│n a Evento</span>
+                                        <span>Invitación a Evento</span>
                                     </button>
                                 </div>
                             </div>
@@ -1359,12 +1404,12 @@
                                     <option value="todos">Todos los Alumnos</option>
                                     <option value="activos">Solo Alumnos Activos</option>
                                     <option value="pendientes">Alumnos con Pago Pendiente</option>
-                                    <option value="nuevos">Alumnos Nuevos (├║ltimo mes)</option>
+                                    <option value="nuevos">Alumnos Nuevos (último mes)</option>
                                 </select>
                             </div>
                             <div class="admin-form-group">
                                 <label>Mensaje</label>
-                                <textarea id="massMessageText" rows="6" placeholder="Escribe tu mensaje aqu├¡...
+                                <textarea id="massMessageText" rows="6" placeholder="Escribe tu mensaje aquí...
 
 Puedes usar variables como:
 {nombre} - Nombre del alumno
@@ -1402,7 +1447,7 @@ Puedes usar variables como:
                 <div class="admin-panel" id="panel-notifications">
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-birthday-cake" style="color: var(--accent);"></i> Cumplea├▒os Este Mes</h3>
+                            <h3><i class="fas fa-birthday-cake" style="color: var(--accent);"></i> Cumpleaños Este Mes</h3>
                         </div>
                         <div class="admin-card-body">
                             <div class="birthday-list" id="birthdayList">
@@ -1411,30 +1456,30 @@ Puedes usar variables como:
                                 <div class="birthday-item">
                                     <div class="birthday-avatar">JM</div>
                                     <div class="birthday-info">
-                                        <h4>Juan Mart├¡nez</h4>
+                                        <h4>Juan Martínez</h4>
                                         <p>Cumple el 18 de Enero</p>
                                     </div>
-                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216863484588', 'Juan Mart├¡nez')">
+                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216863484588', 'Juan Martínez')">
                                         <i class="fab fa-whatsapp"></i> Felicitar
                                     </button>
                                 </div>
                                 <div class="birthday-item">
                                     <div class="birthday-avatar">MG</div>
                                     <div class="birthday-info">
-                                        <h4>Mar├¡a Garc├¡a</h4>
+                                        <h4>María García</h4>
                                         <p>Cumple el 22 de Enero</p>
                                     </div>
-                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216861234567', 'Mar├¡a Garc├¡a')">
+                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216861234567', 'María García')">
                                         <i class="fab fa-whatsapp"></i> Felicitar
                                     </button>
                                 </div>
                                 <div class="birthday-item">
                                     <div class="birthday-avatar">CR</div>
                                     <div class="birthday-info">
-                                        <h4>Carlos Rodr├¡guez</h4>
+                                        <h4>Carlos Rodríguez</h4>
                                         <p>Cumple el 28 de Enero</p>
                                     </div>
-                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216869876543', 'Carlos Rodr├¡guez')">
+                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216869876543', 'Carlos Rodríguez')">
                                         <i class="fab fa-whatsapp"></i> Felicitar
                                     </button>
                                 </div>
@@ -1445,14 +1490,14 @@ Puedes usar variables como:
 
                     <div class="admin-card" style="margin-top: 2rem;">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-bell" style="color: #3b82f6;"></i> Notificaciones Autom├íticas</h3>
+                            <h3><i class="fas fa-bell" style="color: #3b82f6;"></i> Notificaciones Automáticas</h3>
                         </div>
                         <div class="admin-card-body">
                             <div class="notification-settings">
                                 <div class="notification-option">
                                     <div class="notification-option-info">
-                                        <h4>Recordatorio 3 d├¡as antes de vencimiento</h4>
-                                        <p>Enviar WhatsApp autom├ítico cuando falten 3 d├¡as para que venza el pago</p>
+                                        <h4>Recordatorio 3 días antes de vencimiento</h4>
+                                        <p>Enviar WhatsApp automático cuando falten 3 días para que venza el pago</p>
                                     </div>
                                     <label class="toggle-switch">
                                         <input type="checkbox" checked>
@@ -1461,8 +1506,8 @@ Puedes usar variables como:
                                 </div>
                                 <div class="notification-option">
                                     <div class="notification-option-info">
-                                        <h4>Recordatorio d├¡a de vencimiento</h4>
-                                        <p>Enviar recordatorio el d├¡a exacto del vencimiento</p>
+                                        <h4>Recordatorio día de vencimiento</h4>
+                                        <p>Enviar recordatorio el día exacto del vencimiento</p>
                                     </div>
                                     <label class="toggle-switch">
                                         <input type="checkbox" checked>
@@ -1471,8 +1516,8 @@ Puedes usar variables como:
                                 </div>
                                 <div class="notification-option">
                                     <div class="notification-option-info">
-                                        <h4>Felicitaciones de cumplea├▒os</h4>
-                                        <p>Enviar mensaje autom├ítico de felicitaci├│n</p>
+                                        <h4>Felicitaciones de cumpleaños</h4>
+                                        <p>Enviar mensaje automático de felicitación</p>
                                     </div>
                                     <label class="toggle-switch">
                                         <input type="checkbox">
@@ -1538,10 +1583,10 @@ Puedes usar variables como:
                                 <thead>
                                     <tr>
                                         <th>Item</th>
-                                        <th>Categor├¡a</th>
+                                        <th>Categoría</th>
                                         <th>Cantidad</th>
                                         <th>Estado</th>
-                                        <th>├Ültima Revisi├│n</th>
+                                        <th>Última Revisión</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -1595,7 +1640,7 @@ Puedes usar variables como:
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Cabezales de Protecci├│n</strong></td>
+                                        <td><strong>Cabezales de Protección</strong></td>
                                         <td>Equipo Personal</td>
                                         <td>15 unidades</td>
                                         <td><span class="badge badge-success">Bueno</span></td>
@@ -1645,12 +1690,12 @@ Puedes usar variables como:
                                         <span class="month">FEB</span>
                                     </div>
                                     <div class="event-info">
-                                        <h4>Exhibici├│n San Valent├¡n</h4>
+                                        <h4>Exhibición San Valentín</h4>
                                         <p><i class="fas fa-map-marker-alt"></i> Centro de Convenciones</p>
                                         <p><i class="fas fa-users"></i> 12 participantes inscritos</p>
                                     </div>
                                     <div class="event-actions">
-                                        <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('Exhibici├│n San Valent├¡n', '14 de Febrero')">
+                                        <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('Exhibición San Valentín', '14 de Febrero')">
                                             <i class="fab fa-whatsapp"></i> Invitar
                                         </button>
                                     </div>
@@ -1661,7 +1706,7 @@ Puedes usar variables como:
                                         <span class="month">DIC</span>
                                     </div>
                                     <div class="event-info">
-                                        <h4>Torneo Navide├▒o</h4>
+                                        <h4>Torneo Navideño</h4>
                                         <p><i class="fas fa-map-marker-alt"></i> Gimnasio Principal</p>
                                         <p><i class="fas fa-trophy"></i> Completado</p>
                                     </div>
@@ -1692,7 +1737,7 @@ Puedes usar variables como:
                                 <div class="progress-item">
                                     <div class="progress-avatar">JM</div>
                                     <div class="progress-info">
-                                        <h4>Juan Mart├¡nez</h4>
+                                        <h4>Juan Martínez</h4>
                                         <p>Nivel: Intermedio | Inicio: 15/06/2025</p>
                                         <div class="progress-stats">
                                             <span><i class="fas fa-calendar-check"></i> 85 clases asistidas</span>
@@ -1712,7 +1757,7 @@ Puedes usar variables como:
                                 <div class="progress-item">
                                     <div class="progress-avatar">MG</div>
                                     <div class="progress-info">
-                                        <h4>Mar├¡a Garc├¡a</h4>
+                                        <h4>María García</h4>
                                         <p>Nivel: Avanzado | Inicio: 10/01/2024</p>
                                         <div class="progress-stats">
                                             <span><i class="fas fa-calendar-check"></i> 245 clases asistidas</span>
@@ -1732,7 +1777,7 @@ Puedes usar variables como:
                                 <div class="progress-item">
                                     <div class="progress-avatar">CR</div>
                                     <div class="progress-info">
-                                        <h4>Carlos Rodr├¡guez</h4>
+                                        <h4>Carlos Rodríguez</h4>
                                         <p>Nivel: Principiante | Inicio: 01/12/2025</p>
                                         <div class="progress-stats">
                                             <span><i class="fas fa-calendar-check"></i> 18 clases asistidas</span>
@@ -1769,7 +1814,7 @@ Puedes usar variables como:
                                     </div>
                                     <div class="backup-info">
                                         <h4>Exportar Alumnos</h4>
-                                        <p>Lista completa de alumnos con informaci├│n de contacto</p>
+                                        <p>Lista completa de alumnos con información de contacto</p>
                                     </div>
                                     <button class="btn btn-primary" onclick="exportData('students')">
                                         <i class="fas fa-download"></i> Descargar Excel
@@ -1805,7 +1850,7 @@ Puedes usar variables como:
                                     </div>
                                     <div class="backup-info">
                                         <h4>Respaldo Completo</h4>
-                                        <p>Toda la informaci├│n del sistema en un solo archivo</p>
+                                        <p>Toda la información del sistema en un solo archivo</p>
                                     </div>
                                     <button class="btn btn-success" onclick="exportData('all')">
                                         <i class="fas fa-download"></i> Descargar Todo
@@ -1825,7 +1870,7 @@ Puedes usar variables como:
                                     <tr>
                                         <th>Fecha</th>
                                         <th>Tipo</th>
-                                        <th>Tama├▒o</th>
+                                        <th>Tamaño</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -1882,7 +1927,7 @@ Puedes usar variables como:
                             <input type="email" id="newStudentEmail" required placeholder="email@ejemplo.com">
                         </div>
                         <div class="admin-form-group">
-                            <label>Tel├®fono *</label>
+                            <label>Teléfono *</label>
                             <input type="tel" id="newStudentPhone" required placeholder="686 123 4567">
                         </div>
                         <div class="admin-form-group">
@@ -1943,7 +1988,7 @@ Puedes usar variables como:
                     </div>
 
                     <div class="admin-form-group">
-                        <label>C├│digo de Comprobante (si aplica)</label>
+                        <label>Código de Comprobante (si aplica)</label>
                         <input type="text" id="newStudentReceiptCode" placeholder="Ej: RFB-2026011412345">
                     </div>
                     <div class="admin-form-group">
@@ -2315,6 +2360,18 @@ Puedes usar variables como:
 </div>
 
 <script>
+// ── Dashboard greeting ─────────────────────────────────────────
+(function() {
+    const el = document.getElementById('dashGreeting');
+    if (!el) return;
+    const now = new Date();
+    const h = now.getHours();
+    const greeting = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    const days = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    el.textContent = `${greeting} — ${days[now.getDay()]} ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+})();
+
 // ── Mobile navigation helpers ──────────────────────────────────
 function mobileNav(panel) {
     if (typeof showAdminPanel === 'function') showAdminPanel(panel);
