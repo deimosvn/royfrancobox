@@ -2481,3 +2481,265 @@ body {
     .alert-item { padding: .6rem 1rem; gap: .6rem; }
     .alert-item-actions .btn { padding: .3rem .5rem; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD v3 — Today's classes + enrolled students redesign
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Today's classes full-width card ────────────────────────── */
+.dash-today-card { margin-bottom: 0; }
+
+/* Slots wrapper — horizontal scroll on mobile */
+#classesTodayGrid {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0 1.25rem 1.25rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+#classesTodayGrid::-webkit-scrollbar { height: 5px; }
+#classesTodayGrid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+/* Single time-slot card */
+.today-slot-card {
+    flex: 0 0 260px;
+    min-width: 240px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+@media (max-width: 600px) {
+    .today-slot-card { flex: 0 0 220px; min-width: 200px; }
+}
+
+.today-slot-hdr {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .75rem 1rem .4rem;
+    gap: .5rem;
+}
+.today-slot-time {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    font-weight: 700;
+    font-size: .88rem;
+    color: var(--text-dark);
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.today-slot-clsname {
+    font-size: .72rem;
+    font-weight: 500;
+    color: var(--text-gray);
+    background: var(--border);
+    padding: .1rem .4rem;
+    border-radius: 4px;
+}
+.today-slot-count {
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--text-gray);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.today-slot-bar {
+    height: 4px;
+    background: var(--border);
+    margin: 0 1rem .5rem;
+    border-radius: 99px;
+    overflow: hidden;
+}
+.today-slot-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .4s;
+}
+
+.today-slot-students { padding: 0 .75rem .75rem; flex: 1; }
+
+.today-student-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .45rem .25rem;
+    border-bottom: 1px solid var(--border);
+}
+.today-student-row:last-child { border-bottom: none; }
+
+.today-student-av {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: .72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.today-student-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+.today-student-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.today-student-plan {
+    font-size: .7rem;
+    color: var(--text-gray);
+}
+
+.today-student-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.today-dot--active  { background: #10B981; }
+.today-dot--expired { background: #EF4444; }
+
+.today-attend-btn {
+    padding: .25rem .5rem !important;
+    font-size: .7rem !important;
+    opacity: 0;
+    transition: opacity .15s;
+    flex-shrink: 0;
+}
+.today-student-row:hover .today-attend-btn { opacity: 1; }
+
+/* Show attend btn always on touch devices */
+@media (hover: none) {
+    .today-attend-btn { opacity: 1; }
+}
+
+/* ── Enrolled students list ──────────────────────────────────── */
+.enroll-row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .7rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    transition: background .1s;
+}
+.enroll-row:last-child { border-bottom: none; }
+.enroll-row:hover { background: var(--surface); }
+
+.enroll-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: .82rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.enroll-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .2rem;
+}
+
+.enroll-top {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.enroll-name {
+    font-size: .88rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.enroll-meta {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.enroll-plan   { font-size: .72rem; font-weight: 700; }
+.enroll-classes { font-size: .72rem; color: var(--text-gray); }
+.enroll-schedule { font-size: .7rem; color: var(--text-gray); }
+.enroll-schedule i { opacity: .6; }
+
+/* Progress bar */
+.enroll-progress {
+    height: 4px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-top: .15rem;
+}
+.enroll-bar {
+    height: 100%;
+    border-radius: 99px;
+    transition: width .4s;
+}
+
+/* Status badges */
+.enroll-badge {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .15rem .45rem;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.enroll-badge--expired { background: #EF44441a; color: #EF4444; }
+.enroll-badge--soon    { background: #F973161a; color: #F97316; }
+.enroll-badge--warn    { background: #F59E0B1a; color: #F59E0B; }
+.enroll-badge--ok      { background: #10B9811a; color: #10B981; }
+
+/* Action buttons */
+.enroll-actions {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex-shrink: 0;
+}
+.btn-xs {
+    padding: .25rem .5rem !important;
+    font-size: .72rem !important;
+    border-radius: 7px !important;
+    min-width: 30px;
+}
+
+@media (max-width: 480px) {
+    .enroll-row { padding: .6rem 1rem; gap: .6rem; }
+    .enroll-avatar { width: 34px; height: 34px; }
+    .enroll-name { max-width: 120px; }
+}
+
+/* ── Layout tweak: dash-main-grid on mobile ──────────────────── */
+@media (max-width: 900px) {
+    .dash-main-grid { grid-template-columns: 1fr; }
+}
+
+/* Hide label text on very small screens */
+@media (max-width: 380px) {
+    .hide-xs { display: none; }
+}

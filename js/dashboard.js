@@ -328,65 +328,102 @@ function renderEnrolledStudentsList(students) {
 
 function _renderEnrolledFiltered() {
     const list   = document.getElementById('enrolledStudentsList');
+    const label  = document.getElementById('enrolledCountLabel');
     if (!list) return;
-    const search = (document.getElementById('enrolledSearch')?.value || '').toLowerCase();
-    const plan   = document.getElementById('enrolledFilterPlan')?.value || '';
 
-    const filtered = _enrolledAll.filter(s => {
-        if (plan && s.plan !== plan) return false;
+    const search = (document.getElementById('enrolledSearch')?.value || '').toLowerCase();
+    const status = document.getElementById('enrolledFilterStatus')?.value || '';
+
+    let filtered = _enrolledAll.filter(s => {
         if (search && !(s.name || '').toLowerCase().includes(search)) return false;
+        const days = daysUntilExpiry(s.expiryDate);
+        if (status === 'activo')   return s.remainingClasses > 0 && (days === null || days > 5);
+        if (status === 'vencido')  return s.remainingClasses <= 0 || (days !== null && days < 0);
+        if (status === 'urgente') {
+            if (s.remainingClasses <= 0) return true;
+            return days !== null && days <= 5;
+        }
         return true;
     });
 
+    // Sort: expired first → expiring soon (by days) → active (alphabetical)
+    filtered.sort((a, b) => {
+        const da = daysUntilExpiry(a.expiryDate) ?? -999;
+        const db = daysUntilExpiry(b.expiryDate) ?? -999;
+        const expA = a.remainingClasses <= 0;
+        const expB = b.remainingClasses <= 0;
+        if (expA && !expB) return -1;
+        if (!expA && expB) return  1;
+        if (da <= 5 && db > 5) return -1;
+        if (da > 5 && db <= 5) return  1;
+        if (da <= 5 && db <= 5) return da - db;
+        return (a.name || '').localeCompare(b.name || '', 'es');
+    });
+
+    if (label) label.textContent = `(${filtered.length})`;
+
     if (filtered.length === 0) {
-        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:1.5rem;">Sin alumnos registrados.</p>`;
+        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:2rem;">Sin alumnos con ese filtro.</p>`;
         return;
     }
 
-    const planColors = { diario: '#F59E0B', semanal: '#3B82F6', mensual: '#10B981' };
+    const planColors = { diario:'#F59E0B', semanal:'#3B82F6', mensual:'#10B981' };
 
     list.innerHTML = filtered.map(s => {
         const initials  = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const planLabel = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
         const planColor = planColors[s.plan] || '#6B7280';
-        const statusCls = s.remainingClasses > 0 ? 'badge-success' : 'badge-danger';
-        const statusTxt = s.remainingClasses > 0 ? 'Activo' : 'Vencido';
         const days      = daysUntilExpiry(s.expiryDate);
         const phone     = (s.phone || '').replace(/\D/g, '');
         const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
         const amount    = PLAN_PRICES[s.plan] || 700;
+        const total     = s.totalClasses || 1;
+        const remaining = Math.max(0, s.remainingClasses || 0);
+        const usedPct   = Math.round((1 - remaining / total) * 100);
+        const barClr    = remaining <= 0 ? '#EF4444' : remaining <= 3 ? '#F59E0B' : '#10B981';
 
-        let expiryTag = '';
-        let waBtn     = '';
-        if (s.plan === 'mensual' || s.plan === 'semanal') {
-            if (days !== null) {
-                if (days < 0) {
-                    expiryTag = `<span style="font-size:.72rem;background:#EF444422;color:#EF4444;padding:.1rem .35rem;border-radius:4px;font-weight:600;">Vencido</span>`;
-                } else if (days === 0) {
-                    expiryTag = `<span style="font-size:.72rem;background:#EF444422;color:#EF4444;padding:.1rem .35rem;border-radius:4px;font-weight:600;">Vence hoy</span>`;
-                    waBtn = `<button class="btn btn-whatsapp btn-sm" style="padding:.2rem .5rem;font-size:.75rem;" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','0')" title="Recordatorio WhatsApp"><i class="fab fa-whatsapp"></i></button>`;
-                } else if (days <= 5) {
-                    expiryTag = `<span style="font-size:.72rem;background:#F59E0B22;color:#F59E0B;padding:.1rem .35rem;border-radius:4px;font-weight:600;">Vence en ${days}d</span>`;
-                    waBtn     = `<button class="btn btn-whatsapp btn-sm" style="padding:.2rem .5rem;font-size:.75rem;" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','${days}')" title="Recordatorio WhatsApp"><i class="fab fa-whatsapp"></i></button>`;
-                } else {
-                    expiryTag = `<span style="font-size:.72rem;color:var(--text-gray);">${s.expiryDate}</span>`;
-                }
-            }
+        // Status tag
+        let statusTag, statusRow = '';
+        if (s.remainingClasses <= 0) {
+            statusTag = `<span class="enroll-badge enroll-badge--expired">Vencido</span>`;
+        } else if (days !== null && days <= 0) {
+            statusTag = `<span class="enroll-badge enroll-badge--expired">Vence hoy</span>`;
+        } else if (days !== null && days <= 3) {
+            statusTag = `<span class="enroll-badge enroll-badge--soon">${days}d</span>`;
+        } else if (days !== null && days <= 7) {
+            statusTag = `<span class="enroll-badge enroll-badge--warn">${days}d</span>`;
+        } else {
+            statusTag = `<span class="enroll-badge enroll-badge--ok">Activo</span>`;
         }
 
+        // WA button only for urgent
+        const showWa = s.remainingClasses <= 0 || (days !== null && days <= 5);
+        const waBtn  = showWa
+            ? `<button class="btn btn-whatsapp btn-xs enroll-action" onclick="sendWhatsAppReminder('${intlPhone}','${esc(s.name)}','${amount}','${days ?? 0}')" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>`
+            : '';
+        const renewBtn = s.remainingClasses <= 0
+            ? `<button class="btn btn-primary btn-xs enroll-action" onclick="openRenewModal('${s.id}')" title="Renovar"><i class="fas fa-sync-alt"></i></button>`
+            : `<button class="btn btn-secondary btn-xs enroll-action" onclick="attendStudent('${s.id}')" title="Registrar clase"><i class="fas fa-check"></i></button>`;
+
         return `
-        <div style="display:flex;align-items:center;gap:.75rem;padding:.65rem .25rem;border-bottom:1px solid var(--border);">
-            <div class="avatar" style="min-width:36px;width:36px;height:36px;font-size:.82rem;">${initials}</div>
-            <div style="flex:1;min-width:0;">
-                <div style="font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.name)}</div>
-                <div style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.12rem;">
-                    <span style="font-size:.72rem;font-weight:700;color:${planColor};background:${planColor}22;padding:.1rem .35rem;border-radius:4px;">${planLabel}</span>
-                    <span style="font-size:.72rem;color:var(--text-gray);">${s.remainingClasses}/${s.totalClasses} clases</span>
-                    ${expiryTag}
+        <div class="enroll-row">
+            <div class="enroll-avatar" style="background:${planColor}1a;color:${planColor};">${initials}</div>
+            <div class="enroll-body">
+                <div class="enroll-top">
+                    <span class="enroll-name">${esc(s.name)}</span>
+                    ${statusTag}
+                </div>
+                <div class="enroll-meta">
+                    <span class="enroll-plan" style="color:${planColor};">${planLabel}</span>
+                    <span class="enroll-classes">${remaining}/${total} clases</span>
+                    ${s.schedule ? `<span class="enroll-schedule"><i class="fas fa-clock"></i> ${esc(s.schedule)}</span>` : ''}
+                </div>
+                <div class="enroll-progress">
+                    <div class="enroll-bar" style="width:${usedPct}%;background:${barClr};"></div>
                 </div>
             </div>
-            <div style="display:flex;gap:.3rem;align-items:center;flex-shrink:0;">
-                <span class="badge ${statusCls}" style="font-size:.72rem;">${statusTxt}</span>
+            <div class="enroll-actions">
+                ${renewBtn}
                 ${waBtn}
             </div>
         </div>`;
@@ -636,16 +673,21 @@ window.manageClass = function (classId) {
 // ══════════════════════════════════════════════════════════════
 
 function renderClassesToday(students) {
-    const grid = document.getElementById('classesTodayGrid');
+    const grid     = document.getElementById('classesTodayGrid');
+    const subtitle = document.getElementById('classesTodaySubtitle');
     if (!grid) return;
 
     const active = students.filter(s => s.remainingClasses > 0);
+
     if (active.length === 0) {
-        grid.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:2rem;grid-column:1/-1;">Sin alumnos activos registrados.</p>`;
+        grid.innerHTML = `<div style="text-align:center;color:var(--text-gray);padding:2.5rem 1rem;">
+            <i class="fas fa-calendar-times" style="font-size:2rem;opacity:.4;display:block;margin-bottom:.75rem;"></i>
+            Sin alumnos activos registrados</div>`;
+        if (subtitle) subtitle.textContent = '';
         return;
     }
 
-    // Group students by schedule slot
+    // Group by schedule slot, sort slots by hour
     const bySchedule = {};
     active.forEach(s => {
         const slot = s.schedule || 'Sin horario';
@@ -653,46 +695,77 @@ function renderClassesToday(students) {
         bySchedule[slot].push(s);
     });
 
-    grid.innerHTML = '';
-    Object.entries(bySchedule).slice(0, 4).forEach(([slot, list]) => {
-        const cls = _allClasses.find(c =>
+    const slots = Object.keys(bySchedule).sort((a, b) => {
+        const ha = parseInt((a.match(/\d+/) || ['0'])[0]);
+        const hb = parseInt((b.match(/\d+/) || ['0'])[0]);
+        return ha - hb;
+    });
+
+    if (subtitle) subtitle.textContent = `${slots.length} horario${slots.length !== 1 ? 's' : ''} · ${active.length} alumno${active.length !== 1 ? 's' : ''}`;
+
+    grid.innerHTML = slots.map(slot => {
+        const list = bySchedule[slot];
+        const cls  = _allClasses.find(c =>
             (c.schedule || '').trim().toLowerCase() === slot.trim().toLowerCase() ||
             (c.name     || '').trim().toLowerCase() === slot.trim().toLowerCase()
         );
-        const cap = cls?.capacity || 20;
-        const pct = Math.min(100, Math.round((list.length / cap) * 100));
-        const clr = pct > 80 ? 'warning' : '';
-        const items   = list.slice(0, 4).map(s => {
-            const initials = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const cap     = cls?.capacity || 20;
+        const pct     = Math.min(100, Math.round(list.length / cap * 100));
+        const barClr  = pct >= 90 ? '#EF4444' : pct >= 70 ? '#F59E0B' : '#10B981';
+        const hour    = parseInt((slot.match(/\d+/) || ['12'])[0]);
+        const isMorn  = hour >= 5 && hour < 12;
+        const timeIcon = isMorn ? 'fa-sun' : 'fa-moon';
+        const timeClr  = isMorn ? '#F59E0B' : '#6366F1';
+
+        const studentRows = list.slice(0, 8).map(s => {
+            const init     = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const planClr  = { diario:'#F59E0B', semanal:'#3B82F6', mensual:'#10B981' }[s.plan] || '#6B7280';
+            const planLbl  = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
+            const statDot  = s.remainingClasses > 0
+                ? `<span class="today-student-dot today-dot--active"></span>`
+                : `<span class="today-student-dot today-dot--expired"></span>`;
             return `
-            <div class="class-student-item">
-                <div class="student-avatar">${initials}</div>
-                <div class="class-student-info">
-                    <h5>${esc(s.name)}</h5>
-                    <span>${capitalize(s.level || '')} &bull; ${capitalize(s.plan || '')}</span>
+            <div class="today-student-row">
+                <div class="today-student-av" style="background:${planClr}22;color:${planClr};">${init}</div>
+                <div class="today-student-info">
+                    <span class="today-student-name">${esc(s.name)}</span>
+                    <span class="today-student-plan">${planLbl}</span>
                 </div>
-                <i class="fas fa-check-circle" style="color:var(--success);"></i>
+                ${statDot}
+                <button class="btn btn-primary btn-sm today-attend-btn"
+                    onclick="attendStudent('${s.id}')"
+                    title="Registrar asistencia">
+                    <i class="fas fa-check"></i>
+                </button>
             </div>`;
         }).join('');
-        const extra = list.length > 4 ? `<p style="text-align:center;color:var(--text-gray);font-size:.8rem;">+${list.length - 4} más</p>` : '';
 
-        grid.insertAdjacentHTML('beforeend', `
-        <div class="class-card">
-            <div class="class-card-header">
-                <h4>${esc(slot)}</h4>
-                <div class="class-time"><i class="fas fa-users"></i> ${list.length} alumnos</div>
-            </div>
-            <div class="class-card-body">
-                <div class="class-capacity">
-                    <span>${list.length}/${cap}</span>
-                    <div class="capacity-bar"><div class="capacity-fill ${clr}" style="width:${pct}%;"></div></div>
-                    <span>${pct}%</span>
+        const extraCount = list.length > 8 ? `
+            <p style="text-align:center;font-size:.78rem;color:var(--text-gray);padding:.5rem 0;margin:0;">
+                +${list.length - 8} alumnos más
+            </p>` : '';
+
+        const clsName = cls?.name ? `<span class="today-slot-clsname">${esc(cls.name)}</span>` : '';
+
+        return `
+        <div class="today-slot-card">
+            <div class="today-slot-hdr">
+                <div class="today-slot-time">
+                    <i class="fas ${timeIcon}" style="color:${timeClr};"></i>
+                    <span>${esc(slot)}</span>
+                    ${clsName}
                 </div>
-                <div class="class-students-list">${items}</div>
-                ${extra}
+                <span class="today-slot-count">${list.length}/${cap}</span>
             </div>
-        </div>`);
-    });
+            <div class="today-slot-bar">
+                <div class="today-slot-fill" style="width:${pct}%;background:${barClr};"></div>
+            </div>
+            <div class="today-slot-students">
+                ${studentRows}
+                ${extraCount}
+            </div>
+        </div>`;
+    }).join('');
 }
 
 // ══════════════════════════════════════════════════════════════
