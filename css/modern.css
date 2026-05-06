@@ -2272,3 +2272,12 @@ body {
     .admin-card-body   { padding: .85rem 1rem; }
 }
 
+/* ── iOS input zoom prevention (font-size must be >= 16px) ── */
+.admin-form-group input,
+.admin-form-group select,
+.admin-form-group textarea,
+.admin-modal input,
+.admin-modal select,
+.admin-modal textarea {
+    font-size: max(16px, 0.875rem) !important;
+}

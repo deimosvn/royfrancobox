@@ -151,7 +151,12 @@ window.showAdminPanel = function (panelName) {
     document.querySelectorAll('.sidebar-menu-item').forEach(i => i.classList.remove('active'));
 
     document.getElementById('panel-' + panelName)?.classList.add('active');
-    event?.target?.closest('.sidebar-menu-item')?.classList.add('active');
+    document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+        const oc = item.getAttribute('onclick') || '';
+        if (oc.includes("'" + panelName + "'") || oc.includes('"' + panelName + '"')) {
+            item.classList.add('active');
+        }
+    });
 
     const titles = {
         dashboard:     'Dashboard',
@@ -1275,9 +1280,8 @@ window.registerIncome = async function () {
     if (!amount || amount <= 0) { showNotification('Ingresa un monto válido', 'error'); return; }
 
     try {
-        const entry = { type: 'income', concept, amount, notes, studentName: student, paymentMethod: method };
-        const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        await addDoc(collection(db, 'finances'), { ...entry, createdAt: serverTimestamp() });
+        const fullNotes = [notes, method ? `Forma de pago: ${method}` : ''].filter(Boolean).join(' — ');
+        await addFinanceEntry('income', concept, amount, fullNotes, student);
         if (amountEl)  amountEl.value  = '';
         if (studentEl) studentEl.value = '';
         if (notesEl)   notesEl.value   = '';
@@ -1851,8 +1855,89 @@ window.downloadReport = function () {
     w.document.close();
     showNotification('Reporte generado — usa Ctrl+P / Cmd+P para guardar como PDF', 'success');
 };
-window.openAddInventoryModal = () => showNotification('Inventario — próximamente', 'success');
-window.openAddEventModal     = () => showNotification('Eventos — próximamente', 'success');
+window.openAddInventoryModal = function () {
+    document.getElementById('addInventoryForm')?.reset();
+    document.getElementById('addInventoryModal')?.classList.add('active');
+};
+
+window.saveNewInventoryItem = function (e) {
+    e.preventDefault();
+    const btn = e.submitter || e.target.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando\u2026'; }
+    const name     = document.getElementById('invItemName')?.value.trim();
+    const category = document.getElementById('invItemCategory')?.value || 'Equipo Personal';
+    const qty      = document.getElementById('invItemQty')?.value.trim() || '1';
+    const state    = document.getElementById('invItemState')?.value || 'Bueno';
+    if (!name) {
+        showNotification('Escribe el nombre del item', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+        return;
+    }
+    const today = new Date().toLocaleDateString('es-MX');
+    const tbody = document.querySelector('#panel-inventory .admin-table tbody');
+    if (tbody) {
+        const badgeClass = state === 'Bueno' ? 'badge-success' : state === 'Revisar' ? 'badge-warning' : 'badge-danger';
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${esc(name)}</strong></td>
+            <td>${esc(category)}</td>
+            <td>${esc(qty)}</td>
+            <td><span class="badge ${badgeClass}">${esc(state)}</span></td>
+            <td>${today}</td>
+            <td><div class="action-btns"><button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></div></td>
+        `;
+        tbody.insertBefore(row, tbody.firstChild);
+    }
+    showNotification(`Item "${name}" agregado`, 'success');
+    closeAdminModal('addInventoryModal');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
+};
+
+window.openAddEventModal = function () {
+    document.getElementById('addEventForm')?.reset();
+    document.getElementById('addEventModal')?.classList.add('active');
+};
+
+window.createEvent = window.saveNewEvent = function (e) {
+    e.preventDefault();
+    const btn = e.submitter || e.target.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.textContent = 'Guardando\u2026'; }
+    const name  = document.getElementById('eventName')?.value.trim();
+    const date  = document.getElementById('eventDate')?.value;
+    const place = document.getElementById('eventPlace')?.value.trim() || 'Gimnasio Principal';
+    const desc  = document.getElementById('eventDesc')?.value.trim() || '';
+    if (!name || !date) {
+        showNotification('Nombre y fecha son obligatorios', 'error');
+        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
+        return;
+    }
+    const d        = new Date(date + 'T12:00:00');
+    const dayNum   = d.getDate();
+    const monthStr = d.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
+    const grid     = document.querySelector('#panel-events .events-grid');
+    if (grid) {
+        const safePlace = esc(place).replace(/'/g, "\\'");
+        const card = document.createElement('div');
+        card.className = 'event-card upcoming';
+        card.innerHTML = `
+            <div class="event-date"><span class="day">${dayNum}</span><span class="month">${monthStr}</span></div>
+            <div class="event-info">
+                <h4>${esc(name)}</h4>
+                <p><i class="fas fa-map-marker-alt"></i> ${esc(place)}</p>
+                ${desc ? `<p>${esc(desc)}</p>` : ''}
+            </div>
+            <div class="event-actions">
+                <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('${esc(name).replace(/'/g, "\\'")}','${date}')">
+                    <i class="fab fa-whatsapp"></i> Invitar
+                </button>
+            </div>
+        `;
+        grid.insertBefore(card, grid.firstChild);
+    }
+    showNotification(`Evento "${name}" creado`, 'success');
+    closeAdminModal('addEventModal');
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Evento'; }
+};
 window.inviteToEvent         = () => showNotification('Invitación preparada', 'success');
 window.viewStudentProgress   = () => showNotification('Ver progreso — próximamente', 'success');
 window.updateStudentProgress = () => showNotification('Actualizar progreso — próximamente', 'success');
@@ -1868,13 +1953,12 @@ window.showNotification = function (message, type = 'success') {
     const icons  = { success: 'check-circle', warning: 'exclamation-triangle', error: 'exclamation-circle' };
 
     const el = document.createElement('div');
-    el.style.cssText = `
-        position:fixed;top:80px;right:20px;padding:.85rem 1.5rem;
-        background:${colors[type]||colors.success};color:#fff;border-radius:10px;
-        box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;
-        animation:slideIn .3s ease;font-weight:500;font-size:.9rem;
-        display:flex;align-items:center;gap:.5rem;max-width:360px;
-    `;
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        el.style.cssText = `position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 5.5rem);left:50%;transform:translateX(-50%);padding:.75rem 1.25rem;background:${colors[type]||colors.success};color:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.25);z-index:9999;animation:slideIn .3s ease;font-weight:500;font-size:.875rem;display:flex;align-items:center;gap:.5rem;max-width:90vw;text-align:center;`;
+    } else {
+        el.style.cssText = `position:fixed;top:80px;right:20px;padding:.85rem 1.5rem;background:${colors[type]||colors.success};color:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.2);z-index:9999;animation:slideIn .3s ease;font-weight:500;font-size:.9rem;display:flex;align-items:center;gap:.5rem;max-width:360px;`;
+    }
     el.innerHTML = `<i class="fas fa-${icons[type]||icons.success}"></i> ${message}`;
     document.body.appendChild(el);
 

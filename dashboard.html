@@ -2291,6 +2291,93 @@ Puedes usar variables como:
         </div>
     </div>
 
+
+    <!-- =============== ADD INVENTORY ITEM MODAL =============== -->
+    <div class="admin-modal" id="addInventoryModal">
+        <div class="admin-modal-content" style="max-width:480px;">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-boxes"></i> Agregar Item al Inventario</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('addInventoryModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="addInventoryForm" onsubmit="saveNewInventoryItem(event)">
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label>Nombre del Item *</label>
+                            <input type="text" id="invItemName" required placeholder="Ej: Guantes 12oz">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Categor&iacute;a</label>
+                            <select id="invItemCategory">
+                                <option value="Equipo Personal">Equipo Personal</option>
+                                <option value="Equipo Fijo">Equipo Fijo</option>
+                                <option value="Ropa">Ropa</option>
+                                <option value="Suplementos">Suplementos</option>
+                                <option value="Otro">Otro</option>
+                            </select>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Cantidad</label>
+                            <input type="text" id="invItemQty" placeholder="Ej: 10 pares">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Estado</label>
+                            <select id="invItemState">
+                                <option value="Bueno">Bueno</option>
+                                <option value="Revisar">Revisar</option>
+                                <option value="Bajo Stock">Bajo Stock</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('addInventoryModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="document.getElementById('addInventoryForm').requestSubmit()">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =============== ADD EVENT MODAL =============== -->
+    <div class="admin-modal" id="addEventModal">
+        <div class="admin-modal-content" style="max-width:500px;">
+            <div class="admin-modal-header">
+                <h3><i class="fas fa-trophy"></i> Nuevo Evento</h3>
+                <button class="admin-modal-close" onclick="closeAdminModal('addEventModal')">&times;</button>
+            </div>
+            <div class="admin-modal-body">
+                <form id="addEventForm" onsubmit="saveNewEvent(event)">
+                    <div class="admin-form-grid">
+                        <div class="admin-form-group">
+                            <label>Nombre del Evento *</label>
+                            <input type="text" id="eventName" required placeholder="Ej: Torneo de Box">
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Fecha *</label>
+                            <input type="date" id="eventDate" required>
+                        </div>
+                        <div class="admin-form-group">
+                            <label>Lugar</label>
+                            <input type="text" id="eventPlace" placeholder="Ej: Gimnasio Principal">
+                        </div>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Descripci&oacute;n</label>
+                        <textarea id="eventDesc" rows="3" placeholder="Detalles del evento..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="admin-modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminModal('addEventModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="document.getElementById('addEventForm').requestSubmit()">
+                    <i class="fas fa-save"></i> Guardar Evento
+                </button>
+            </div>
+        </div>
+    </div>
+
 <script type="module" src="js/dashboard.js"></script>
 
 <!-- ========== MOBILE BOTTOM NAV ========== -->
