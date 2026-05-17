@@ -1169,20 +1169,25 @@ window.saveNewStudent = async function (e) {
             attendanceHistory: [],
             status:            'Activo',
         });
+        
+        // Auto-register finance income for semanal/mensual plans
+        let paymentMsg = '';
         const planLabel = PLAN_LABELS[plan] || plan;
-        showNotification(`Alumno registrado — Plan ${planLabel} (${totalClasses} clase${totalClasses > 1 ? 's' : ''})`, 'success');
-        // Auto-register finance income
-        const payMethod = document.getElementById('newStudentPaymentMethod')?.value || '';
-        const amt       = currentPricing[plan] || 0;
-        const conceptMap = { mensual: 'Mensualidad', semanal: 'Plan Semanal', diario: 'Pase Diario' };
-        const concept    = conceptMap[plan] || 'Ingreso';
-        const noteStr    = `${concept} — ${payMethod || 'No especificado'}`;
-        if (amt > 0) {
+        const amt = currentPricing[plan] || 0;
+        
+        if ((plan === 'semanal' || plan === 'mensual') && amt > 0) {
+            const payMethod = document.getElementById('newStudentPaymentMethod')?.value || '';
+            const conceptMap = { mensual: 'Mensualidad', semanal: 'Plan Semanal', diario: 'Pase Diario' };
+            const concept = conceptMap[plan] || 'Ingreso';
+            const noteStr = `${concept} — ${payMethod || 'No especificado'}`;
             try {
                 const studentName = document.getElementById('newStudentName').value.trim();
                 await addFinanceEntry('income', concept, amt, noteStr, studentName);
+                paymentMsg = ` • Pago de ${amt} MXN registrado automáticamente`;
             } catch (_) { /* non-blocking */ }
         }
+        
+        showNotification(`✓ Alumno registrado — ${planLabel} (${totalClasses} clase${totalClasses > 1 ? 's' : ''})${paymentMsg}`, 'success');
         closeAdminModal('addStudentModal');
         document.getElementById('addStudentForm').reset();
         document.getElementById('classesPreviewBox').style.display = 'none';
@@ -1254,6 +1259,7 @@ window.saveEditStudent = async function (e) {
     const id        = document.getElementById('editStudentId').value;
     const plan      = document.getElementById('editStudentPlan').value;
     const startDate = document.getElementById('editStudentStartDate').value;
+    const oldPlan   = _allStudents.find(s => s.id === id)?.plan || '';
     try {
         await updateStudent(id, {
             name:             document.getElementById('editStudentName').value.trim(),
@@ -1268,7 +1274,26 @@ window.saveEditStudent = async function (e) {
             notes:            document.getElementById('editStudentNotes').value.trim(),
             remainingClasses: parseInt(document.getElementById('editStudentClasses').value) || 0,
         });
-        showNotification('Alumno actualizado correctamente', 'success');
+        
+        // Auto-register payment if plan changed to semanal/mensual
+        if (plan !== oldPlan && (plan === 'semanal' || plan === 'mensual')) {
+            const amt = currentPricing[plan] || 0;
+            const conceptMap = { mensual: 'Mensualidad', semanal: 'Plan Semanal' };
+            const concept = conceptMap[plan] || 'Ingreso';
+            const studentName = document.getElementById('editStudentName').value.trim();
+            if (amt > 0) {
+                try {
+                    await addFinanceEntry('income', concept, amt, `${concept} (cambio de plan)`, studentName);
+                    showNotification(`Alumno actualizado — Pago de ${concept} registrado ($${amt} MXN)`, 'success');
+                } catch (_) {
+                    showNotification('Alumno actualizado (error al registrar pago)', 'warning');
+                }
+            } else {
+                showNotification('Alumno actualizado correctamente', 'success');
+            }
+        } else {
+            showNotification('Alumno actualizado correctamente', 'success');
+        }
         closeAdminModal('editStudentModal');
     } catch (err) {
         showNotification('Error al actualizar: ' + err.message, 'error');
