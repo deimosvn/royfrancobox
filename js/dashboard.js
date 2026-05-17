@@ -33,6 +33,22 @@ import {
 
 // ── Active real-time unsubscribers ─────────────────────────────
 const unsubscribers = [];
+// ── Debounce timers for renders ────────────────────────────────
+const renderTimers = {};
+const isMobile = () => window.innerWidth < 768;
+const MOBILE_LIMIT = 50; // Max rows to render on mobile
+
+/**
+ * Debounce render function to prevent UI blocking on mobile.
+ * @param {string} key - Unique key for debounce
+ * @param {function} fn - Render function
+ * @param {number} delay - Debounce delay in ms
+ */
+function debounceRender(key, fn, delay = 150) {
+    clearTimeout(renderTimers[key]);
+    renderTimers[key] = setTimeout(fn, delay);
+}
+
 // ── Plan metadata ──────────────────────────────────────────────
 const PLAN_LABELS = { diario: 'Por Clase', semanal: 'Semanal', mensual: 'Mensual' };
 const PLAN_EXPIRY_DAYS = { semanal: 7, mensual: 30 };
@@ -76,46 +92,54 @@ function initDashboard() {
     if (dashboardInitialised) return;
     dashboardInitialised = true;
 
-    // Students
+    // Students (debounced render to prevent UI blocking)
     unsubscribers.push(
         onStudentsChange(students => {
             _allStudents = students;
-            renderStudentsTable(students);
-            renderDashboardStats(students);
-            renderPendingPaymentsWidget(students);
-            renderClassesToday(students);
-            renderProgressList(students);
-            renderBirthdays(students);
-            renderEnrolledStudentsList(students);
-            renderIndivWaList(students);
+            debounceRender('renderStudents', () => {
+                renderStudentsTable(students);
+                renderDashboardStats(students);
+                renderPendingPaymentsWidget(students);
+                renderClassesToday(students);
+                renderProgressList(students);
+                renderBirthdays(students);
+                renderEnrolledStudentsList(students);
+                renderIndivWaList(students);
+            }, 200);
         })
     );
 
-    // Payments
+    // Payments (debounced render)
     unsubscribers.push(
         onPaymentsChange(payments => {
-            renderPaymentsTable(payments);
-            renderPaymentsStats(payments);
-            updateFullFinancesStats(payments, _allFinances);
-            renderActivityFeed(payments);
+            debounceRender('renderPayments', () => {
+                renderPaymentsTable(payments);
+                renderPaymentsStats(payments);
+                updateFullFinancesStats(payments, _allFinances);
+                renderActivityFeed(payments);
+            }, 200);
         })
     );
 
-    // Classes
+    // Classes (debounced render)
     unsubscribers.push(
         onClassesChange(classes => {
             _allClasses = classes;
-            renderAllClasses(classes, _allStudents);
-            renderClassesToday(_allStudents);
+            debounceRender('renderClasses', () => {
+                renderAllClasses(classes, _allStudents);
+                renderClassesToday(_allStudents);
+            }, 200);
         })
     );
 
-    // Finances
+    // Finances (debounced render)
     unsubscribers.push(
         onFinancesChange(finances => {
             _allFinances = finances;
-            renderFinancesTable(finances);
-            updateFullFinancesStats(_latestPayments, finances);
+            debounceRender('renderFinances', () => {
+                renderFinancesTable(finances);
+                updateFullFinancesStats(_latestPayments, finances);
+            }, 200);
         })
     );
     // Settings (Pricing and Gym Info)
@@ -945,7 +969,12 @@ function renderFinancesTable(finances) {
     }
 
     const sorted = [...finances].sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-    tbody.innerHTML = sorted.map(f => {
+    
+    // On mobile, limit render to MOBILE_LIMIT rows
+    const limit = isMobile() ? MOBILE_LIMIT : sorted.length;
+    const toRender = sorted.slice(0, limit);
+    
+    tbody.innerHTML = toRender.map(f => {
         const isIncome = f.type === 'income';
         const amtStr   = isIncome ? `+${formatMXN(f.amount)}` : `-${formatMXN(f.amount)}`;
         const clr      = isIncome ? 'var(--success)' : 'var(--danger)';
@@ -964,6 +993,15 @@ function renderFinancesTable(finances) {
             <td style="color:${clr};font-weight:600;">${amtStr}</td>
         </tr>`;
     }).join('');
+    
+    // If there are more rows, add indicator
+    if (sorted.length > limit) {
+        tbody.insertAdjacentHTML('beforeend', 
+            `<tr style="background:rgba(255,200,0,0.1);"><td colspan="5" style="text-align:center;padding:1rem;color:var(--warning);font-size:0.9rem;">
+                ↓ ${sorted.length - limit} movimientos más
+            </td></tr>`
+        );
+    }
 }
 
 function updateFullFinancesStats(payments, finances) {
@@ -1016,14 +1054,27 @@ function applyStudentsFilter(students) {
 
     const tbody = document.getElementById('studentsTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '';
-
+    
     if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-gray);padding:2rem;">Sin alumnos registrados.</td></tr>`;
         return;
     }
 
-    filtered.forEach(s => tbody.insertAdjacentHTML('beforeend', buildStudentRow(s)));
+    // On mobile, limit render to MOBILE_LIMIT rows to prevent UI freezing
+    const limit = isMobile() ? MOBILE_LIMIT : filtered.length;
+    const toRender = filtered.slice(0, limit);
+    const html = toRender.map(s => buildStudentRow(s)).join('');
+    
+    tbody.innerHTML = html;
+    
+    // If there are more rows, add indicator
+    if (filtered.length > limit) {
+        tbody.insertAdjacentHTML('beforeend', 
+            `<tr style="background:rgba(255,200,0,0.1);"><td colspan="7" style="text-align:center;padding:1rem;color:var(--warning);font-size:0.9rem;">
+                ↓ ${filtered.length - limit} alumnos más (scroll en tabla)
+            </td></tr>`
+        );
+    }
 }
 
 function buildStudentRow(s) {
@@ -1321,17 +1372,20 @@ window.deleteStudent = async function (id) {
 function renderPaymentsTable(payments) {
     const tbody = document.getElementById('paymentsTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '';
 
     if (payments.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--text-gray);padding:2rem;">Sin pagos registrados.</td></tr>`;
         return;
     }
 
-    payments.forEach(p => {
+    // On mobile, limit render to MOBILE_LIMIT rows
+    const limit = isMobile() ? MOBILE_LIMIT : payments.length;
+    const toRender = payments.slice(0, limit);
+    
+    tbody.innerHTML = toRender.map(p => {
         const initials   = (p.studentName || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const statusCls  = p.status === 'Pagado' ? 'badge-success' : 'badge-warning';
-        tbody.insertAdjacentHTML('beforeend', `
+        return `
         <tr>
             <td>
                 <div class="student-info-cell">
@@ -1351,8 +1405,17 @@ function renderPaymentsTable(payments) {
                         : ''}
                 </div>
             </td>
-        </tr>`);
-    });
+        </tr>`;
+    }).join('');
+    
+    // If there are more rows, add indicator
+    if (payments.length > limit) {
+        tbody.insertAdjacentHTML('beforeend', 
+            `<tr style="background:rgba(255,200,0,0.1);"><td colspan="6" style="text-align:center;padding:1rem;color:var(--warning);font-size:0.9rem;">
+                ↓ ${payments.length - limit} pagos más
+            </td></tr>`
+        );
+    }
 }
 
 function renderPaymentsStats(payments) {
