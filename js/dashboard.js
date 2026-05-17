@@ -37,7 +37,7 @@ const unsubscribers = [];
 const PLAN_LABELS = { diario: 'Por Clase', semanal: 'Semanal', mensual: 'Mensual' };
 const PLAN_EXPIRY_DAYS = { semanal: 7, mensual: 30 };
 
-let currentPricing = { diario: 100, semanal: 300, mensual: 700 };
+let currentPricing = { diario: 100, semanal: 300, mensual: 700, personal: 200 };
 
 /** Returns YYYY-MM-DD expiry string, or '' if no fixed expiry (e.g. per-class). */
 function calcExpiryDate(startDate, plan) {
@@ -126,9 +126,11 @@ function initDashboard() {
                 const pMensual = document.getElementById('settingsPriceMensual');
                 const pSemanal = document.getElementById('settingsPriceSemanal');
                 const pDiario  = document.getElementById('settingsPriceDiario');
+                const pPersonal = document.getElementById('settingsPricePersonal');
                 if (pMensual) pMensual.value = prices.mensual || '';
                 if (pSemanal) pSemanal.value = prices.semanal || '';
                 if (pDiario)  pDiario.value  = prices.diario  || '';
+                if (pPersonal) pPersonal.value = prices.personal || '';
             }
         })
     );
@@ -2094,9 +2096,10 @@ window.saveSettings = async function () {
     const phone   = document.getElementById('settingsPhone')?.value?.trim();
     const email   = document.getElementById('settingsEmail')?.value?.trim();
     const address = document.getElementById('settingsAddress')?.value?.trim();
-    const pMensual= parseFloat(document.getElementById('settingsPriceMensual')?.value || '700');
-    const pSemanal= parseFloat(document.getElementById('settingsPriceSemanal')?.value || '300');
-    const pDiario = parseFloat(document.getElementById('settingsPriceDiario')?.value || '100');
+    const pMensual  = parseFloat(document.getElementById('settingsPriceMensual')?.value || '700');
+    const pSemanal  = parseFloat(document.getElementById('settingsPriceSemanal')?.value || '300');
+    const pDiario   = parseFloat(document.getElementById('settingsPriceDiario')?.value || '100');
+    const pPersonal = parseFloat(document.getElementById('settingsPricePersonal')?.value || '200');
 
     try {
         await saveSettingsDoc('gymInfo', {
@@ -2105,9 +2108,10 @@ window.saveSettings = async function () {
         await saveSettingsDoc('pricing', {
             mensual: pMensual,
             semanal: pSemanal,
-            diario: pDiario
+            diario: pDiario,
+            personal: pPersonal
         });
-        showNotification('Configuración guardada correctamente', 'success');
+        showNotification('✓ Configuración de precios guardada correctamente', 'success');
     } catch (err) {
         showNotification('Error al guardar: ' + err.message, 'error');
     }
