@@ -331,6 +331,43 @@ export async function getRegistrationCode() {
     return snap.exists() ? (snap.data().secretCode || '') : '';
 }
 
+// ── Pricing ────────────────────────────────────────────────────
+
+/**
+ * Get plan pricing from Firestore.
+ * Returns { diario: 100, semanal: 300, mensual: 700 } or defaults.
+ */
+export async function getPricing() {
+    const snap = await getDoc(doc(db, SETTINGS, 'pricing'));
+    if (snap.exists()) return snap.data();
+    return { diario: 100, semanal: 300, mensual: 700 };
+}
+
+/**
+ * Save plan pricing to Firestore.
+ */
+export async function savePricing(data) {
+    return setDoc(doc(db, SETTINGS, 'pricing'), data, { merge: true });
+}
+
+// ── Notification Settings ──────────────────────────────────────
+
+/**
+ * Get notification settings from Firestore.
+ */
+export async function getNotificationSettings() {
+    const snap = await getDoc(doc(db, SETTINGS, 'notifications'));
+    if (snap.exists()) return snap.data();
+    return { reminder3days: true, reminderDay: true, birthday: false, welcome: true };
+}
+
+/**
+ * Save notification settings to Firestore.
+ */
+export async function saveNotificationSettings(data) {
+    return setDoc(doc(db, SETTINGS, 'notifications'), data, { merge: true });
+}
+
 // ── Utility helpers ────────────────────────────────────────────
 
 /**

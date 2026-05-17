@@ -35,8 +35,9 @@ import {
 const unsubscribers = [];
 // ── Plan metadata ──────────────────────────────────────────────
 const PLAN_LABELS = { diario: 'Por Clase', semanal: 'Semanal', mensual: 'Mensual' };
-const PLAN_PRICES = { diario: 100, semanal: 300, mensual: 700 };
 const PLAN_EXPIRY_DAYS = { semanal: 7, mensual: 30 };
+
+let currentPricing = { diario: 100, semanal: 300, mensual: 700 };
 
 /** Returns YYYY-MM-DD expiry string, or '' if no fixed expiry (e.g. per-class). */
 function calcExpiryDate(startDate, plan) {
@@ -115,6 +116,48 @@ function initDashboard() {
             _allFinances = finances;
             renderFinancesTable(finances);
             updateFullFinancesStats(_latestPayments, finances);
+        })
+    );
+    // Settings (Pricing and Gym Info)
+    unsubscribers.push(
+        getSettings('pricing', (prices) => {
+            if (prices) {
+                currentPricing = { ...currentPricing, ...prices };
+                const pMensual = document.getElementById('settingsPriceMensual');
+                const pSemanal = document.getElementById('settingsPriceSemanal');
+                const pDiario  = document.getElementById('settingsPriceDiario');
+                if (pMensual) pMensual.value = prices.mensual || '';
+                if (pSemanal) pSemanal.value = prices.semanal || '';
+                if (pDiario)  pDiario.value  = prices.diario  || '';
+            }
+        })
+    );
+    unsubscribers.push(
+        getSettings('gymInfo', (info) => {
+            if (info) {
+                const name = document.getElementById('settingsGymName');
+                const phone = document.getElementById('settingsPhone');
+                const email = document.getElementById('settingsEmail');
+                const addr = document.getElementById('settingsAddress');
+                if (name) name.value = info.name || '';
+                if (phone) phone.value = info.phone || '';
+                if (email) email.value = info.email || '';
+                if (addr) addr.value = info.address || '';
+            }
+        })
+    );
+    unsubscribers.push(
+        getSettings('notifications', (prefs) => {
+            if (prefs) {
+                const rem3 = document.getElementById('notifReminder3Days');
+                const remDay = document.getElementById('notifReminderDay');
+                const birth = document.getElementById('notifBirthday');
+                const welc = document.getElementById('notifWelcome');
+                if (rem3) rem3.checked = prefs.reminder3Days ?? true;
+                if (remDay) remDay.checked = prefs.reminderDay ?? true;
+                if (birth) birth.checked = prefs.birthday ?? false;
+                if (welc) welc.checked = prefs.welcome ?? true;
+            }
         })
     );
 }
@@ -277,7 +320,7 @@ function renderPendingAlertsCards(students) {
         const initials  = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
         const phone     = (s.phone || '').replace(/\D/g, '');
         const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
-        const amount    = PLAN_PRICES[s.plan] || 700;
+        const amount    = currentPricing[s.plan] || 700;
         const days      = daysUntilExpiry(s.expiryDate);
         const planLabel = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
 
@@ -376,7 +419,7 @@ function _renderEnrolledFiltered() {
         const days      = daysUntilExpiry(s.expiryDate);
         const phone     = (s.phone || '').replace(/\D/g, '');
         const intlPhone = phone.startsWith('52') ? phone : '521' + phone;
-        const amount    = PLAN_PRICES[s.plan] || 700;
+        const amount    = currentPricing[s.plan] || 700;
         const total     = s.totalClasses || 1;
         const remaining = Math.max(0, s.remainingClasses || 0);
         const usedPct   = Math.round((1 - remaining / total) * 100);
@@ -1120,7 +1163,7 @@ window.saveNewStudent = async function (e) {
         showNotification(`Alumno registrado — Plan ${planLabel} (${totalClasses} clase${totalClasses > 1 ? 's' : ''})`, 'success');
         // Auto-register finance income
         const payMethod = document.getElementById('newStudentPaymentMethod')?.value || '';
-        const amt       = PLAN_PRICES[plan] || 0;
+        const amt       = currentPricing[plan] || 0;
         const conceptMap = { mensual: 'Mensualidad', semanal: 'Plan Semanal', diario: 'Pase Diario' };
         const concept    = conceptMap[plan] || 'Ingreso';
         const noteStr    = `${concept} — ${payMethod || 'No especificado'}`;
@@ -1310,7 +1353,7 @@ window.openAddPaymentModal = function () {
             const planEl = document.getElementById('paymentPlan');
             if (opt && opt.dataset.plan && planEl) planEl.value = opt.dataset.plan;
             const amtEl = document.getElementById('paymentAmount');
-            if (opt && opt.dataset.plan && amtEl && !amtEl.value) amtEl.value = PLAN_PRICES[opt.dataset.plan] || '';
+            if (opt && opt.dataset.plan && amtEl && !amtEl.value) amtEl.value = currentPricing[opt.dataset.plan] || '';
         };
     }
     document.getElementById('addPaymentModal')?.classList.add('active');
@@ -1529,7 +1572,7 @@ window.saveRenew = async function (e) {
         });
         // Register income
         const concept = { mensual: 'Mensualidad', semanal: 'Plan Semanal', diario: 'Pase Diario' }[plan] || 'Renovación';
-        const amt     = PLAN_PRICES[plan] || 0;
+        const amt     = currentPricing[plan] || 0;
         const noteStr = `Renovación — ${method || 'No especificado'}`;
         if (amt > 0) await addFinanceEntry('income', concept, amt, noteStr, s?.name || '');
         showNotification(`Suscripción renovada — Plan ${PLAN_LABELS[plan]}`, 'success');
@@ -1551,7 +1594,7 @@ window.openCustomWhatsApp = function (id) {
     document.getElementById('customWaStudentId').value     = id;
     document.getElementById('customWaStudentName').textContent = s.name;
     const days = daysUntilExpiry(s.expiryDate);
-    const amt  = PLAN_PRICES[s.plan] || 700;
+    const amt  = currentPricing[s.plan] || 700;
     // pre-fill default message
     let defaultMsg = `¡Hola ${s.name}! 🥊
 
@@ -1707,7 +1750,7 @@ window.sendMassWhatsApp = function () {
         const expiryStr = s.expiryDate || 'próximamente';
         const personalised = msg
             .replace(/\{nombre\}/g, s.name || 'Alumno')
-            .replace(/\{monto\}/g, '$' + (PLAN_PRICES[s.plan] || 700) + ' MXN')
+            .replace(/\{monto\}/g, '$' + (currentPricing[s.plan] || 700) + ' MXN')
             .replace(/\{fecha_vencimiento\}/g, expiryStr);
         setTimeout(() => window.open(`https://wa.me/${intlPhone}?text=${encodeURIComponent(personalised)}`, '_blank'), i * 400);
     });
@@ -1947,92 +1990,49 @@ window.downloadReport = function () {
     w.document.close();
     showNotification('Reporte generado — usa Ctrl+P / Cmd+P para guardar como PDF', 'success');
 };
-window.openAddInventoryModal = function () {
-    document.getElementById('addInventoryForm')?.reset();
-    document.getElementById('addInventoryModal')?.classList.add('active');
+window.saveSettings = async function () {
+    const gymName = document.getElementById('settingsGymName')?.value?.trim();
+    const phone   = document.getElementById('settingsPhone')?.value?.trim();
+    const email   = document.getElementById('settingsEmail')?.value?.trim();
+    const address = document.getElementById('settingsAddress')?.value?.trim();
+    const pMensual= parseFloat(document.getElementById('settingsPriceMensual')?.value || '700');
+    const pSemanal= parseFloat(document.getElementById('settingsPriceSemanal')?.value || '300');
+    const pDiario = parseFloat(document.getElementById('settingsPriceDiario')?.value || '100');
+
+    try {
+        await saveSettingsDoc('gymInfo', {
+            name: gymName, phone, email, address
+        });
+        await saveSettingsDoc('pricing', {
+            mensual: pMensual,
+            semanal: pSemanal,
+            diario: pDiario
+        });
+        showNotification('Configuración guardada correctamente', 'success');
+    } catch (err) {
+        showNotification('Error al guardar: ' + err.message, 'error');
+    }
 };
 
-window.saveNewInventoryItem = function (e) {
-    e.preventDefault();
-    const btn = e.submitter || e.target.querySelector('[type=submit]');
-    if (btn) { btn.disabled = true; btn.textContent = 'Guardando\u2026'; }
-    const name     = document.getElementById('invItemName')?.value.trim();
-    const category = document.getElementById('invItemCategory')?.value || 'Equipo Personal';
-    const qty      = document.getElementById('invItemQty')?.value.trim() || '1';
-    const state    = document.getElementById('invItemState')?.value || 'Bueno';
-    if (!name) {
-        showNotification('Escribe el nombre del item', 'error');
-        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
-        return;
+window.saveNotificationsConfig = async function () {
+    const rem3   = document.getElementById('notifReminder3Days')?.checked;
+    const remDay = document.getElementById('notifReminderDay')?.checked;
+    const birth  = document.getElementById('notifBirthday')?.checked;
+    const welc   = document.getElementById('notifWelcome')?.checked;
+
+    try {
+        await saveSettingsDoc('notifications', {
+            reminder3Days: rem3,
+            reminderDay: remDay,
+            birthday: birth,
+            welcome: welc
+        });
+        showNotification('Preferencias de notificaciones guardadas', 'success');
+    } catch (err) {
+        showNotification('Error: ' + err.message, 'error');
     }
-    const today = new Date().toLocaleDateString('es-MX');
-    const tbody = document.querySelector('#panel-inventory .admin-table tbody');
-    if (tbody) {
-        const badgeClass = state === 'Bueno' ? 'badge-success' : state === 'Revisar' ? 'badge-warning' : 'badge-danger';
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><strong>${esc(name)}</strong></td>
-            <td>${esc(category)}</td>
-            <td>${esc(qty)}</td>
-            <td><span class="badge ${badgeClass}">${esc(state)}</span></td>
-            <td>${today}</td>
-            <td><div class="action-btns"><button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button></div></td>
-        `;
-        tbody.insertBefore(row, tbody.firstChild);
-    }
-    showNotification(`Item "${name}" agregado`, 'success');
-    closeAdminModal('addInventoryModal');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar'; }
 };
 
-window.openAddEventModal = function () {
-    document.getElementById('addEventForm')?.reset();
-    document.getElementById('addEventModal')?.classList.add('active');
-};
-
-window.createEvent = window.saveNewEvent = function (e) {
-    e.preventDefault();
-    const btn = e.submitter || e.target.querySelector('[type=submit]');
-    if (btn) { btn.disabled = true; btn.textContent = 'Guardando\u2026'; }
-    const name  = document.getElementById('eventName')?.value.trim();
-    const date  = document.getElementById('eventDate')?.value;
-    const place = document.getElementById('eventPlace')?.value.trim() || 'Gimnasio Principal';
-    const desc  = document.getElementById('eventDesc')?.value.trim() || '';
-    if (!name || !date) {
-        showNotification('Nombre y fecha son obligatorios', 'error');
-        if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
-        return;
-    }
-    const d        = new Date(date + 'T12:00:00');
-    const dayNum   = d.getDate();
-    const monthStr = d.toLocaleDateString('es-MX', { month: 'short' }).toUpperCase().replace('.', '');
-    const grid     = document.querySelector('#panel-events .events-grid');
-    if (grid) {
-        const safePlace = esc(place).replace(/'/g, "\\'");
-        const card = document.createElement('div');
-        card.className = 'event-card upcoming';
-        card.innerHTML = `
-            <div class="event-date"><span class="day">${dayNum}</span><span class="month">${monthStr}</span></div>
-            <div class="event-info">
-                <h4>${esc(name)}</h4>
-                <p><i class="fas fa-map-marker-alt"></i> ${esc(place)}</p>
-                ${desc ? `<p>${esc(desc)}</p>` : ''}
-            </div>
-            <div class="event-actions">
-                <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('${esc(name).replace(/'/g, "\\'")}','${date}')">
-                    <i class="fab fa-whatsapp"></i> Invitar
-                </button>
-            </div>
-        `;
-        grid.insertBefore(card, grid.firstChild);
-    }
-    showNotification(`Evento "${name}" creado`, 'success');
-    closeAdminModal('addEventModal');
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Guardar Evento'; }
-};
-window.inviteToEvent         = () => showNotification('Invitación preparada', 'success');
-window.viewStudentProgress   = () => showNotification('Ver progreso — próximamente', 'success');
-window.updateStudentProgress = () => showNotification('Actualizar progreso — próximamente', 'success');
 window.exportData            = type => showNotification(`Exportando ${type}…`, 'success');
 window.markAsPaid            = id   => paymentMarkPaid(id);
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -30,7 +30,6 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="css/dashboard.css">
     <link rel="stylesheet" href="css/modern.css">
 
     <!-- Register Service Worker -->
@@ -102,21 +101,6 @@
                     </a>
                 </div>
                 
-                <div class="sidebar-section">
-                    <span class="sidebar-section-title">GIMNASIO</span>
-                    <a class="sidebar-menu-item" onclick="showAdminPanel('inventory')">
-                        <i class="fas fa-boxes"></i>
-                        <span>Inventario</span>
-                    </a>
-                    <a class="sidebar-menu-item" onclick="showAdminPanel('events')">
-                        <i class="fas fa-trophy"></i>
-                        <span>Eventos</span>
-                    </a>
-                    <a class="sidebar-menu-item" onclick="showAdminPanel('progress')">
-                        <i class="fas fa-chart-bar"></i>
-                        <span>Progreso Alumnos</span>
-                    </a>
-                </div>
                 
                 <div class="sidebar-section">
                     <span class="sidebar-section-title">SISTEMA</span>
@@ -214,33 +198,7 @@
                         </div>
                     </div>
 
-                    <!-- ── QUICK ACTIONS ─────────────────────────────────── -->
-                    <div class="dash-qa-row">
-                        <button class="dash-qa" onclick="openAddStudentModal()">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Alumno</span>
-                        </button>
-                        <button class="dash-qa" onclick="showAdminPanel('finances')">
-                            <i class="fas fa-wallet"></i>
-                            <span>Ingreso</span>
-                        </button>
-                        <button class="dash-qa" onclick="openAddClassModal()">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>Clase</span>
-                        </button>
-                        <button class="dash-qa dash-qa--wa" onclick="sendAutoReminders()">
-                            <i class="fab fa-whatsapp"></i>
-                            <span>Recordar</span>
-                        </button>
-                        <button class="dash-qa" onclick="showAdminPanel('reports')">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Reporte</span>
-                        </button>
-                        <button class="dash-qa" onclick="showAdminPanel('payments')">
-                            <i class="fas fa-credit-card"></i>
-                            <span>Pagos</span>
-                        </button>
-                    </div>
+
 
                     <!-- ── CLASES DE HOY (full width) ────────────────────── -->
                     <div class="admin-card dash-today-card">
@@ -626,89 +584,34 @@
 
                 <!-- Schedule Panel -->
                 <div class="admin-panel" id="panel-schedule">
-                    <!-- Page Header -->
                     <div class="page-header" style="margin-bottom:1.5rem;">
                         <div>
                             <h2><i class="fas fa-clock" style="color:var(--primary);margin-right:.5rem;"></i>Horarios</h2>
-                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Horario semanal del gimnasio</p>
+                            <p style="color:var(--text-gray);font-size:.85rem;margin-top:.15rem;">Clases y horarios del gimnasio (datos desde Firebase)</p>
                         </div>
-                        <button class="btn btn-primary" onclick="editSchedule()">
-                            <i class="fas fa-edit"></i> Editar Horarios
+                        <button class="btn btn-primary" onclick="openAddClassModal()">
+                            <i class="fas fa-plus"></i> Nueva Clase
                         </button>
                     </div>
                     <div class="admin-card">
                         <div class="admin-card-header">
-                            <h3><i class="fas fa-calendar-week"></i> Horario Semanal</h3>
+                            <h3><i class="fas fa-calendar-week"></i> Horario de Clases</h3>
                         </div>
                         <div class="admin-card-body">
                             <div class="table-responsive"><table class="admin-table">
                                 <thead>
                                     <tr>
+                                        <th>Clase</th>
                                         <th>Horario</th>
-                                        <th>Lunes</th>
-                                        <th>Martes</th>
-                                        <th>Miércoles</th>
-                                        <th>Jueves</th>
-                                        <th>Viernes</th>
+                                        <th>Días</th>
+                                        <th>Instructor</th>
+                                        <th>Nivel</th>
+                                        <th>Capacidad</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>6:00 - 7:00 AM</strong></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>7:00 - 8:00 AM</strong></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>8:00 - 9:00 AM</strong></td>
-                                        <td><span class="badge badge-success">Principiantes</span></td>
-                                        <td><span class="badge badge-success">Principiantes</span></td>
-                                        <td><span class="badge badge-success">Principiantes</span></td>
-                                        <td><span class="badge badge-success">Principiantes</span></td>
-                                        <td><span class="badge badge-success">Principiantes</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>5:00 - 6:00 PM</strong></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>6:00 - 7:00 PM</strong></td>
-                                        <td><span class="badge badge-danger">Avanzado</span></td>
-                                        <td><span class="badge badge-danger">Avanzado</span></td>
-                                        <td><span class="badge badge-danger">Avanzado</span></td>
-                                        <td><span class="badge badge-danger">Avanzado</span></td>
-                                        <td><span class="badge badge-danger">Avanzado</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>7:00 - 8:00 PM</strong></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                        <td><span class="badge badge-warning">Intermedio</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>8:00 - 9:00 PM</strong></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                        <td><span class="badge badge-success">Todos</span></td>
-                                    </tr>
+                                <tbody id="scheduleTableBody">
+                                    <tr><td colspan="7" style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando horarios…</td></tr>
                                 </tbody>
                             </table></div>
                         </div>
@@ -956,35 +859,31 @@
                             <div class="admin-form-grid">
                                 <div class="admin-form-group">
                                     <label>Nombre del Gimnasio</label>
-                                    <input type="text" value="Roy Franco Box">
+                                    <input type="text" id="settingsGymName" value="Roy Franco Box">
                                 </div>
                                 <div class="admin-form-group">
                                     <label>Teléfono de Contacto</label>
-                                    <input type="tel" value="686 348 4588">
+                                    <input type="tel" id="settingsPhone" value="686 348 4588">
                                 </div>
                                 <div class="admin-form-group">
                                     <label>Email</label>
-                                    <input type="email" value="royfabianf@gmail.com">
+                                    <input type="email" id="settingsEmail" value="royfabianf@gmail.com">
                                 </div>
                                 <div class="admin-form-group">
                                     <label>Dirección</label>
-                                    <input type="text" value="Av. Querétaro #2201, Mexicali">
-                                </div>
-                                <div class="admin-form-group">
-                                    <label>Capacidad Máxima por Clase</label>
-                                    <input type="number" value="20">
+                                    <input type="text" id="settingsAddress" value="Av. Querétaro #2201, Mexicali">
                                 </div>
                                 <div class="admin-form-group">
                                     <label>Precio Plan Mensual</label>
-                                    <input type="number" value="700">
+                                    <input type="number" id="settingsPriceMensual" value="700">
                                 </div>
                                 <div class="admin-form-group">
                                     <label>Precio Plan Semanal</label>
-                                    <input type="number" value="300">
+                                    <input type="number" id="settingsPriceSemanal" value="300">
                                 </div>
                                 <div class="admin-form-group">
                                     <label>Precio Plan Diario</label>
-                                    <input type="number" value="100">
+                                    <input type="number" id="settingsPriceDiario" value="100">
                                 </div>
                             </div>
                             <button class="btn btn-primary" style="margin-top: 1rem;" onclick="saveSettings()">
@@ -1327,7 +1226,7 @@ Puedes usar variables como:
                                         <p>Enviar WhatsApp automático cuando falten 3 días para que venza el pago</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" checked>
+                                        <input type="checkbox" id="notifReminder3Days" checked>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -1337,7 +1236,7 @@ Puedes usar variables como:
                                         <p>Enviar recordatorio el día exacto del vencimiento</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" checked>
+                                        <input type="checkbox" id="notifReminderDay" checked>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -1347,7 +1246,7 @@ Puedes usar variables como:
                                         <p>Enviar mensaje automático de felicitación</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox">
+                                        <input type="checkbox" id="notifBirthday">
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
@@ -1357,275 +1256,19 @@ Puedes usar variables como:
                                         <p>Mensaje de bienvenida al registrar nuevo alumno</p>
                                     </div>
                                     <label class="toggle-switch">
-                                        <input type="checkbox" checked>
+                                        <input type="checkbox" id="notifWelcome" checked>
                                         <span class="toggle-slider"></span>
                                     </label>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========== INVENTORY PANEL ========== -->
-                <div class="admin-panel" id="panel-inventory">
-                    <div class="admin-stats-grid" style="margin-bottom: 2rem;">
-                        <div class="admin-stat-card">
-                            <div class="stat-icon" style="background: rgba(220, 38, 38, 0.1); color: var(--primary);">
-                                <i class="fas fa-boxes"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>156</h3>
-                                <p>Items en Inventario</p>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--accent);">
-                                <i class="fas fa-exclamation-triangle"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>8</h3>
-                                <p>Stock Bajo</p>
-                            </div>
-                        </div>
-                        <div class="admin-stat-card">
-                            <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h3>148</h3>
-                                <p>En Buen Estado</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-boxes"></i> Inventario de Equipo</h3>
-                            <button class="btn btn-primary" onclick="openAddInventoryModal()">
-                                <i class="fas fa-plus"></i> Agregar Item
+                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="saveNotificationsConfig()">
+                                <i class="fas fa-save"></i> Guardar Preferencias
                             </button>
                         </div>
-                        <div class="admin-card-body">
-                            <div class="table-responsive"><table class="admin-table">
-                                <thead>
-                                    <tr>
-                                        <th>Item</th>
-                                        <th>Categoría</th>
-                                        <th>Cantidad</th>
-                                        <th>Estado</th>
-                                        <th>Última Revisión</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><strong>Guantes de Boxeo 12oz</strong></td>
-                                        <td>Equipo Personal</td>
-                                        <td>24 pares</td>
-                                        <td><span class="badge badge-success">Bueno</span></td>
-                                        <td>10/01/2026</td>
-                                        <td>
-                                            <div class="action-btns">
-                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Vendas para Manos</strong></td>
-                                        <td>Equipo Personal</td>
-                                        <td>50 pares</td>
-                                        <td><span class="badge badge-success">Bueno</span></td>
-                                        <td>10/01/2026</td>
-                                        <td>
-                                            <div class="action-btns">
-                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Sacos de Boxeo</strong></td>
-                                        <td>Equipo Fijo</td>
-                                        <td>8 unidades</td>
-                                        <td><span class="badge badge-warning">Revisar</span></td>
-                                        <td>05/01/2026</td>
-                                        <td>
-                                            <div class="action-btns">
-                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Peras de Velocidad</strong></td>
-                                        <td>Equipo Fijo</td>
-                                        <td>4 unidades</td>
-                                        <td><span class="badge badge-danger">Bajo Stock</span></td>
-                                        <td>08/01/2026</td>
-                                        <td>
-                                            <div class="action-btns">
-                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td><strong>Cabezales de Protección</strong></td>
-                                        <td>Equipo Personal</td>
-                                        <td>15 unidades</td>
-                                        <td><span class="badge badge-success">Bueno</span></td>
-                                        <td>10/01/2026</td>
-                                        <td>
-                                            <div class="action-btns">
-                                                <button class="btn btn-secondary btn-sm"><i class="fas fa-edit"></i></button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table></div>
-                        </div>
                     </div>
                 </div>
 
-                <!-- ========== EVENTS PANEL ========== -->
-                <div class="admin-panel" id="panel-events">
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-trophy" style="color: var(--accent);"></i> Eventos y Torneos</h3>
-                            <button class="btn btn-primary" onclick="openAddEventModal()">
-                                <i class="fas fa-plus"></i> Nuevo Evento
-                            </button>
-                        </div>
-                        <div class="admin-card-body">
-                            <div class="events-grid">
-                                <div class="event-card upcoming">
-                                    <div class="event-date">
-                                        <span class="day">25</span>
-                                        <span class="month">ENE</span>
-                                    </div>
-                                    <div class="event-info">
-                                        <h4>Torneo Interno de Box</h4>
-                                        <p><i class="fas fa-map-marker-alt"></i> Gimnasio Principal</p>
-                                        <p><i class="fas fa-users"></i> 24 participantes inscritos</p>
-                                    </div>
-                                    <div class="event-actions">
-                                        <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('Torneo Interno de Box', '25 de Enero')">
-                                            <i class="fab fa-whatsapp"></i> Invitar
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="event-card upcoming">
-                                    <div class="event-date">
-                                        <span class="day">14</span>
-                                        <span class="month">FEB</span>
-                                    </div>
-                                    <div class="event-info">
-                                        <h4>Exhibición San Valentín</h4>
-                                        <p><i class="fas fa-map-marker-alt"></i> Centro de Convenciones</p>
-                                        <p><i class="fas fa-users"></i> 12 participantes inscritos</p>
-                                    </div>
-                                    <div class="event-actions">
-                                        <button class="btn btn-whatsapp btn-sm" onclick="inviteToEvent('Exhibición San Valentín', '14 de Febrero')">
-                                            <i class="fab fa-whatsapp"></i> Invitar
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="event-card past">
-                                    <div class="event-date">
-                                        <span class="day">20</span>
-                                        <span class="month">DIC</span>
-                                    </div>
-                                    <div class="event-info">
-                                        <h4>Torneo Navideño</h4>
-                                        <p><i class="fas fa-map-marker-alt"></i> Gimnasio Principal</p>
-                                        <p><i class="fas fa-trophy"></i> Completado</p>
-                                    </div>
-                                    <div class="event-actions">
-                                        <button class="btn btn-secondary btn-sm">
-                                            <i class="fas fa-eye"></i> Ver Resultados
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ========== PROGRESS PANEL ========== -->
-                <div class="admin-panel" id="panel-progress">
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-chart-line" style="color: var(--success);"></i> Progreso de Alumnos</h3>
-                            <div class="quick-actions">
-                                <input type="text" placeholder="Buscar alumno..." style="padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 8px;">
-                            </div>
-                        </div>
-                        <div class="admin-card-body">
-                            <div class="progress-list" id="progressList">
-                                <p style="text-align:center;color:var(--text-gray);padding:2rem;">Cargando alumnos…</p>
-                                <!-- DEMO_REMOVED
-                                <div class="progress-item">
-                                    <div class="progress-avatar">JM</div>
-                                    <div class="progress-info">
-                                        <h4>Juan Martínez</h4>
-                                        <p>Nivel: Intermedio | Inicio: 15/06/2025</p>
-                                        <div class="progress-stats">
-                                            <span><i class="fas fa-calendar-check"></i> 85 clases asistidas</span>
-                                            <span><i class="fas fa-weight"></i> 72 kg</span>
-                                            <span><i class="fas fa-fire"></i> 6 meses activo</span>
-                                        </div>
-                                    </div>
-                                    <div class="progress-actions">
-                                        <button class="btn btn-secondary btn-sm" onclick="viewStudentProgress('juan-martinez')">
-                                            <i class="fas fa-eye"></i> Ver Detalle
-                                        </button>
-                                        <button class="btn btn-primary btn-sm" onclick="updateStudentProgress('juan-martinez')">
-                                            <i class="fas fa-edit"></i> Actualizar
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="progress-item">
-                                    <div class="progress-avatar">MG</div>
-                                    <div class="progress-info">
-                                        <h4>María García</h4>
-                                        <p>Nivel: Avanzado | Inicio: 10/01/2024</p>
-                                        <div class="progress-stats">
-                                            <span><i class="fas fa-calendar-check"></i> 245 clases asistidas</span>
-                                            <span><i class="fas fa-weight"></i> 58 kg</span>
-                                            <span><i class="fas fa-fire"></i> 24 meses activo</span>
-                                        </div>
-                                    </div>
-                                    <div class="progress-actions">
-                                        <button class="btn btn-secondary btn-sm" onclick="viewStudentProgress('maria-garcia')">
-                                            <i class="fas fa-eye"></i> Ver Detalle
-                                        </button>
-                                        <button class="btn btn-primary btn-sm" onclick="updateStudentProgress('maria-garcia')">
-                                            <i class="fas fa-edit"></i> Actualizar
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="progress-item">
-                                    <div class="progress-avatar">CR</div>
-                                    <div class="progress-info">
-                                        <h4>Carlos Rodríguez</h4>
-                                        <p>Nivel: Principiante | Inicio: 01/12/2025</p>
-                                        <div class="progress-stats">
-                                            <span><i class="fas fa-calendar-check"></i> 18 clases asistidas</span>
-                                            <span><i class="fas fa-weight"></i> 80 kg</span>
-                                            <span><i class="fas fa-fire"></i> 1 mes activo</span>
-                                        </div>
-                                    </div>
-                                    <div class="progress-actions">
-                                        <button class="btn btn-secondary btn-sm" onclick="viewStudentProgress('carlos-rodriguez')">
-                                            <i class="fas fa-eye"></i> Ver Detalle
-                                        </button>
-                                        <button class="btn btn-primary btn-sm" onclick="updateStudentProgress('carlos-rodriguez')">
-                                            <i class="fas fa-edit"></i> Actualizar
-                                        </button>
-                                    </div>
-                                </div>
-                                DEMO_REMOVED -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Panels removed -->
 
                 <!-- ========== BACKUP PANEL ========== -->
                 <div class="admin-panel" id="panel-backup">
@@ -2119,91 +1762,7 @@ Puedes usar variables como:
     </div>
 
 
-    <!-- =============== ADD INVENTORY ITEM MODAL =============== -->
-    <div class="admin-modal" id="addInventoryModal">
-        <div class="admin-modal-content" style="max-width:480px;">
-            <div class="admin-modal-header">
-                <h3><i class="fas fa-boxes"></i> Agregar Item al Inventario</h3>
-                <button class="admin-modal-close" onclick="closeAdminModal('addInventoryModal')">&times;</button>
-            </div>
-            <div class="admin-modal-body">
-                <form id="addInventoryForm" onsubmit="saveNewInventoryItem(event)">
-                    <div class="admin-form-grid">
-                        <div class="admin-form-group">
-                            <label>Nombre del Item *</label>
-                            <input type="text" id="invItemName" required placeholder="Ej: Guantes 12oz">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Categor&iacute;a</label>
-                            <select id="invItemCategory">
-                                <option value="Equipo Personal">Equipo Personal</option>
-                                <option value="Equipo Fijo">Equipo Fijo</option>
-                                <option value="Ropa">Ropa</option>
-                                <option value="Suplementos">Suplementos</option>
-                                <option value="Otro">Otro</option>
-                            </select>
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Cantidad</label>
-                            <input type="text" id="invItemQty" placeholder="Ej: 10 pares">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Estado</label>
-                            <select id="invItemState">
-                                <option value="Bueno">Bueno</option>
-                                <option value="Revisar">Revisar</option>
-                                <option value="Bajo Stock">Bajo Stock</option>
-                            </select>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="admin-modal-footer">
-                <button class="btn btn-secondary" onclick="closeAdminModal('addInventoryModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="document.getElementById('addInventoryForm').requestSubmit()">
-                    <i class="fas fa-save"></i> Guardar
-                </button>
-            </div>
-        </div>
-    </div>
 
-    <!-- =============== ADD EVENT MODAL =============== -->
-    <div class="admin-modal" id="addEventModal">
-        <div class="admin-modal-content" style="max-width:500px;">
-            <div class="admin-modal-header">
-                <h3><i class="fas fa-trophy"></i> Nuevo Evento</h3>
-                <button class="admin-modal-close" onclick="closeAdminModal('addEventModal')">&times;</button>
-            </div>
-            <div class="admin-modal-body">
-                <form id="addEventForm" onsubmit="saveNewEvent(event)">
-                    <div class="admin-form-grid">
-                        <div class="admin-form-group">
-                            <label>Nombre del Evento *</label>
-                            <input type="text" id="eventName" required placeholder="Ej: Torneo de Box">
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Fecha *</label>
-                            <input type="date" id="eventDate" required>
-                        </div>
-                        <div class="admin-form-group">
-                            <label>Lugar</label>
-                            <input type="text" id="eventPlace" placeholder="Ej: Gimnasio Principal">
-                        </div>
-                    </div>
-                    <div class="admin-form-group">
-                        <label>Descripci&oacute;n</label>
-                        <textarea id="eventDesc" rows="3" placeholder="Detalles del evento..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="admin-modal-footer">
-                <button class="btn btn-secondary" onclick="closeAdminModal('addEventModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="document.getElementById('addEventForm').requestSubmit()">
-                    <i class="fas fa-save"></i> Guardar Evento
-                </button>
-            </div>
-        </div>
-    </div>
 
 <script type="module" src="js/dashboard.js"></script>
 
@@ -2253,10 +1812,6 @@ Puedes usar variables como:
         <button class="mobile-more-item" onclick="mobileNav('schedule');closeMobileMore()">
             <i class="fas fa-clock"></i>
             <span>Horarios</span>
-        </button>
-        <button class="mobile-more-item" onclick="mobileNav('progress');closeMobileMore()">
-            <i class="fas fa-chart-bar"></i>
-            <span>Progreso</span>
         </button>
         <button class="mobile-more-item" onclick="mobileNav('notifications');closeMobileMore()">
             <i class="fas fa-bell"></i>
