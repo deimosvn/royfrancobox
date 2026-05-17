@@ -768,7 +768,8 @@ function renderClassesToday(students) {
             const init     = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
             const planClr  = { diario:'#F59E0B', semanal:'#3B82F6', mensual:'#10B981' }[s.plan] || '#6B7280';
             const planLbl  = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
-            const statDot  = s.remainingClasses > 0
+            const daysLeft = daysUntilExpiry(s.expiryDate);
+            const statDot  = (daysLeft !== null && daysLeft >= 0)
                 ? `<span class="today-student-dot today-dot--active"></span>`
                 : `<span class="today-student-dot today-dot--expired"></span>`;
             return `
@@ -779,11 +780,6 @@ function renderClassesToday(students) {
                     <span class="today-student-plan">${planLbl}</span>
                 </div>
                 ${statDot}
-                <button class="btn btn-primary btn-sm today-attend-btn"
-                    onclick="attendStudent('${s.id}')"
-                    title="Registrar asistencia">
-                    <i class="fas fa-check"></i>
-                </button>
             </div>`;
         }).join('');
 
@@ -1029,13 +1025,27 @@ function applyStudentsFilter(students) {
 }
 
 function buildStudentRow(s) {
-    const pct         = s.totalClasses > 0 ? Math.round((s.remainingClasses / s.totalClasses) * 100) : 0;
-    const progressClr = pct > 50 ? 'var(--success)' : pct > 20 ? 'var(--warning)' : 'var(--danger)';
     const initials    = (s.name || '?').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    const statusCls   = s.remainingClasses > 0 ? 'badge-success' : 'badge-danger';
-    const statusTxt   = s.remainingClasses > 0 ? 'Activo' : 'Vencido';
     const planLabel   = PLAN_LABELS[s.plan] || capitalize(s.plan || '');
     const levelLabel  = capitalize(s.level || '');
+
+    const daysLeft    = daysUntilExpiry(s.expiryDate);
+    let timeLeftText  = 'Sin fecha';
+    let timeColor     = 'var(--text-gray)';
+    let statusCls     = 'badge-danger';
+    let statusTxt     = 'Vencido';
+
+    if (daysLeft !== null) {
+        if (daysLeft >= 0) {
+            timeLeftText = daysLeft === 0 ? 'Vence hoy' : `${daysLeft} día(s)`;
+            timeColor = daysLeft <= 5 ? 'var(--warning)' : 'var(--success)';
+            statusCls = 'badge-success';
+            statusTxt = 'Activo';
+        } else {
+            timeLeftText = `Venció hace ${Math.abs(daysLeft)} día(s)`;
+            timeColor = 'var(--danger)';
+        }
+    }
 
     return `
     <tr id="student-row-${s.id}">
@@ -1053,12 +1063,9 @@ function buildStudentRow(s) {
         <td>${planLabel}</td>
         <td>
             <div style="display:flex;align-items:center;gap:.5rem;">
-                <div style="width:60px;height:8px;background:var(--border);border-radius:4px;overflow:hidden;">
-                    <div style="width:${pct}%;height:100%;background:${progressClr};transition:width .3s;"></div>
-                </div>
-                <strong style="color:${progressClr};">${s.remainingClasses}/${s.totalClasses}</strong>
-                <button class="btn btn-success btn-sm" onclick="attendStudent('${s.id}')" title="Registrar asistencia">
-                    <i class="fas fa-check"></i>
+                <strong style="color:${timeColor}; font-size: 0.9rem; min-width: 100px;">${timeLeftText}</strong>
+                <button class="btn btn-success btn-sm" onclick="openRenewModal('${s.id}')" title="Agregar tiempo">
+                    <i class="fas fa-plus"></i> Tiempo
                 </button>
             </div>
         </td>
@@ -1067,7 +1074,6 @@ function buildStudentRow(s) {
             <div class="action-btns">
                 <button class="btn btn-info btn-sm"    onclick="viewStudent('${s.id}')"           title="Ver"><i class="fas fa-eye"></i></button>
                 <button class="btn btn-warning btn-sm" onclick="editStudent('${s.id}')"           title="Editar"><i class="fas fa-edit"></i></button>
-                <button class="btn btn-success btn-sm" onclick="openRenewModal('${s.id}')"        title="Renovar suscripción"><i class="fas fa-sync-alt"></i></button>
                 <button class="btn btn-whatsapp btn-sm" onclick="openCustomWhatsApp('${s.id}')"   title="WhatsApp personalizado"><i class="fab fa-whatsapp"></i></button>
                 <button class="btn btn-danger btn-sm"  onclick="deleteStudent('${s.id}')"         title="Eliminar"><i class="fas fa-trash"></i></button>
             </div>
