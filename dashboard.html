@@ -94,11 +94,7 @@
                         <i class="fab fa-whatsapp"></i>
                         <span>Mensajes</span>
                     </a>
-                    <a class="sidebar-menu-item" onclick="showAdminPanel('notifications')">
-                        <i class="fas fa-bell"></i>
-                        <span>Notificaciones</span>
-                        <span class="badge-count badge-info">3</span>
-                    </a>
+
                 </div>
                 
                 
@@ -1169,104 +1165,7 @@ Puedes usar variables como:
                     </div>
                 </div>
 
-                <!-- ========== NOTIFICATIONS PANEL ========== -->
-                <div class="admin-panel" id="panel-notifications">
-                    <div class="admin-card">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-birthday-cake" style="color: var(--accent);"></i> Cumpleaños Este Mes</h3>
-                        </div>
-                        <div class="admin-card-body">
-                            <div class="birthday-list" id="birthdayList">
-                                <p style="text-align:center;color:var(--text-gray);padding:1rem;">Cargando cumpleaños…</p>
-                                <!-- DEMO_REMOVED
-                                <div class="birthday-item">
-                                    <div class="birthday-avatar">JM</div>
-                                    <div class="birthday-info">
-                                        <h4>Juan Martínez</h4>
-                                        <p>Cumple el 18 de Enero</p>
-                                    </div>
-                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216863484588', 'Juan Martínez')">
-                                        <i class="fab fa-whatsapp"></i> Felicitar
-                                    </button>
-                                </div>
-                                <div class="birthday-item">
-                                    <div class="birthday-avatar">MG</div>
-                                    <div class="birthday-info">
-                                        <h4>María García</h4>
-                                        <p>Cumple el 22 de Enero</p>
-                                    </div>
-                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216861234567', 'María García')">
-                                        <i class="fab fa-whatsapp"></i> Felicitar
-                                    </button>
-                                </div>
-                                <div class="birthday-item">
-                                    <div class="birthday-avatar">CR</div>
-                                    <div class="birthday-info">
-                                        <h4>Carlos Rodríguez</h4>
-                                        <p>Cumple el 28 de Enero</p>
-                                    </div>
-                                    <button class="btn btn-whatsapp btn-sm" onclick="sendBirthdayWish('5216869876543', 'Carlos Rodríguez')">
-                                        <i class="fab fa-whatsapp"></i> Felicitar
-                                    </button>
-                                </div>
-                                DEMO_REMOVED -->
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="admin-card" style="margin-top: 2rem;">
-                        <div class="admin-card-header">
-                            <h3><i class="fas fa-bell" style="color: #3b82f6;"></i> Notificaciones Automáticas</h3>
-                        </div>
-                        <div class="admin-card-body">
-                            <div class="notification-settings">
-                                <div class="notification-option">
-                                    <div class="notification-option-info">
-                                        <h4>Recordatorio 3 días antes de vencimiento</h4>
-                                        <p>Enviar WhatsApp automático cuando falten 3 días para que venza el pago</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="notifReminder3Days" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="notification-option">
-                                    <div class="notification-option-info">
-                                        <h4>Recordatorio día de vencimiento</h4>
-                                        <p>Enviar recordatorio el día exacto del vencimiento</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="notifReminderDay" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="notification-option">
-                                    <div class="notification-option-info">
-                                        <h4>Felicitaciones de cumpleaños</h4>
-                                        <p>Enviar mensaje automático de felicitación</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="notifBirthday">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                                <div class="notification-option">
-                                    <div class="notification-option-info">
-                                        <h4>Bienvenida a nuevos alumnos</h4>
-                                        <p>Mensaje de bienvenida al registrar nuevo alumno</p>
-                                    </div>
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="notifWelcome" checked>
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                </div>
-                            </div>
-                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="saveNotificationsConfig()">
-                                <i class="fas fa-save"></i> Guardar Preferencias
-                            </button>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Panels removed -->
 
@@ -1813,10 +1712,7 @@ Puedes usar variables como:
             <i class="fas fa-clock"></i>
             <span>Horarios</span>
         </button>
-        <button class="mobile-more-item" onclick="mobileNav('notifications');closeMobileMore()">
-            <i class="fas fa-bell"></i>
-            <span>Avisos</span>
-        </button>
+
         <button class="mobile-more-item" onclick="mobileNav('settings');closeMobileMore()">
             <i class="fas fa-cog"></i>
             <span>Config</span>

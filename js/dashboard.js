@@ -210,7 +210,7 @@ window.showAdminPanel = function (panelName) {
         finances:      'Finanzas',
         reports:       'Reportes',
         messages:      'Mensajes',
-        notifications: 'Notificaciones',
+
         inventory:     'Inventario',
         events:        'Eventos',
         progress:      'Progreso Alumnos',
