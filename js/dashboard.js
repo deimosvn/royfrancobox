@@ -278,6 +278,10 @@ function renderDashboardStats(students) {
     // Sidebar badge
     const badge = document.querySelector('.sidebar-menu-item[onclick*="students"] .badge-count');
     if (badge) badge.textContent = active;
+
+    if (typeof window.updateNotificationsDropdown === 'function') {
+        window.updateNotificationsDropdown(students);
+    }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1829,7 +1833,71 @@ window.sendBirthdayWish = function (phone, name) {
 // ══════════════════════════════════════════════════════════════
 
 window.handleAdminSearch   = e => console.log('Buscando:', e.target.value);
-window.toggleNotifications = () => showNotification('Sin notificaciones nuevas', 'success');
+window.toggleNotifications = function() {
+    const dropdown = document.getElementById('topNavNotifDropdown');
+    if (dropdown) dropdown.classList.toggle('active');
+};
+
+document.addEventListener('click', (e) => {
+    const wrapper = document.querySelector('.notifications-wrapper');
+    const dropdown = document.getElementById('topNavNotifDropdown');
+    if (wrapper && dropdown && !wrapper.contains(e.target)) {
+        dropdown.classList.remove('active');
+    }
+});
+
+window.updateNotificationsDropdown = function(students) {
+    const list = document.getElementById('topNavNotifList');
+    const badge = document.getElementById('topNavNotifBadge');
+    if (!list || !badge) return;
+
+    const today = new Date();
+    const alerts = [];
+
+    students.forEach(s => {
+        const days = daysUntilExpiry(s.expiryDate);
+        if (s.remainingClasses <= 0 || (days !== null && days <= 3)) {
+            alerts.push({
+                type: 'warning',
+                icon: 'fa-exclamation-circle',
+                color: 'var(--warning)',
+                title: 'Pago pendiente',
+                text: `${s.name} - ${s.remainingClasses <= 0 ? 'Vencido' : `Vence en ${days} día(s)`}`
+            });
+        }
+        if (s.birthday) {
+            const [y, m, d] = s.birthday.split('-');
+            if (parseInt(m) === today.getMonth() + 1) {
+                alerts.push({
+                    type: 'info',
+                    icon: 'fa-birthday-cake',
+                    color: 'var(--info)',
+                    title: 'Cumpleaños',
+                    text: `${s.name} - ${d} de ${['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][parseInt(m)-1]}`
+                });
+            }
+        }
+    });
+
+    if (alerts.length > 0) {
+        badge.style.display = 'flex';
+        badge.textContent = alerts.length;
+        list.innerHTML = alerts.map(a => `
+            <div class="notif-item">
+                <div class="notif-item-icon" style="background: ${a.color}22; color: ${a.color};">
+                    <i class="fas ${a.icon}"></i>
+                </div>
+                <div class="notif-item-content">
+                    <h5>${a.title}</h5>
+                    <p>${a.text}</p>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        badge.style.display = 'none';
+        list.innerHTML = `<p style="text-align:center;color:var(--text-gray);padding:1.5rem;">Al día. Sin notificaciones.</p>`;
+    }
+};
 window.openAddClassModal = function () {
     document.getElementById('addClassForm')?.reset();
     document.getElementById('addClassModal')?.classList.add('active');
