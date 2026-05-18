@@ -1161,7 +1161,33 @@ window.exportStudents = function () {
 
 window.openAddStudentModal = function () {
     document.getElementById('addStudentModal').classList.add('active');
+    loadSchedulesFromDatabase();
 };
+
+/**
+ * Load available schedules from database (from classes collection)
+ */
+function loadSchedulesFromDatabase() {
+    const scheduleSelect = document.getElementById('newStudentSchedule');
+    if (!scheduleSelect) return;
+    
+    // Get unique schedules from all classes, sorted
+    const uniqueSchedules = [...new Set(_allClasses.map(c => c.schedule))].filter(s => s).sort();
+    
+    // Build HTML for options
+    const options = ['<option value="">Seleccionar horario</option>'];
+    uniqueSchedules.forEach(schedule => {
+        options.push(`<option value="${esc(schedule)}">${esc(schedule)}</option>`);
+    });
+    
+    // If no schedules in database, show placeholder
+    if (uniqueSchedules.length === 0) {
+        options.push('<option value="" disabled>No hay horarios disponibles</option>');
+    }
+    
+    scheduleSelect.innerHTML = options.join('');
+}
+
 
 window.closeAdminModal = function (id) {
     document.getElementById(id)?.classList.remove('active');
